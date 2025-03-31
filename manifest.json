@@ -4,8 +4,8 @@
     "description": "Manage your culinary empire with elegance.",
     "start_url": "/index.html",
     "display": "standalone",
-    "background_color": "#000000",
-    "theme_color": "#007aff",
+    "background_color": "#565656",
+  "theme_color": "#565656",
     "icons": [
       {
         "src": "icons/icon-192x192.png",
