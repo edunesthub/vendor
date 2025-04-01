@@ -515,7 +515,7 @@
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    ordersList.innerHTML = "<p class='text-gray-400'>No orders yet.</p>";
+                    ordersList.innerHTML = "<p class='text-gray-400'>No orders found  yet.</p>";
                     return;
                 }
                 const orders = [];
@@ -888,5 +888,3 @@
             });
         }
     </script>
-</body>
-</html>
