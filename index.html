@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>Vendor Portal</title>
+    <title>Chawp Vendor Portal</title>
     <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap" rel="stylesheet">
@@ -365,7 +365,7 @@
                     const data = docSnap.data();
                     document.getElementById("store-name").value = data.name || "";
                     document.getElementById("store-image").value = data.image || "";
-                    document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"} Portal`;
+                    document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"}`;
                     document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
                     document.getElementById("store-name-display").textContent = data.name || "Vendor";
                     const isOpen = data.isOpen || false;

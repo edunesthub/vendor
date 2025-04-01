@@ -1,6 +1,6 @@
 {
-    "name": "King Gabby Vendor Portal",
-    "short_name": "Vendor Portal",
+    "name": "Chawp vendor",
+    "short_name": "Chawp Vendor",
     "description": "Manage your culinary empire with elegance.",
     "start_url": "/index.html",
     "display": "standalone",
