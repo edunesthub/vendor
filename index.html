@@ -3,42 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <title>King Gabby - Vendor Home</title>
+    <title>Vendor Portal</title>
+    <link rel="manifest" href="/manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
         body {
-            background: #000;
-            color: #fff;
+            background: #1c1c1e;
+            color: #ffffff;
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
-            padding: 0;
+            padding: 0 0 100px 0; /* Increased space for larger footer */
             min-height: 100vh;
             -webkit-user-select: none;
             -ms-user-select: none;
             user-select: none;
             -webkit-touch-callout: none;
+            overflow-x: hidden;
         }
         .container {
             max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-            position: relative; /* For notification positioning */
+            padding: 30px 20px;
+            position: relative;
         }
         .section {
-            background: #1c1c1e;
-            border-radius: 18px;
-            padding: 25px;
+            background: #252527;
+            border-radius: 20px;
+            padding: 30px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .section.hidden {
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+        }
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 1.1rem;
+            opacity: 0.8;
         }
         .btn {
             background: #007aff;
             color: #fff;
-            padding: 10px 20px;
-            border-radius: 12px;
+            padding: 12px 24px;
+            border-radius: 14px;
             font-weight: 500;
             text-align: center;
             transition: background 0.2s ease, transform 0.2s ease;
+            border: none;
+            cursor: pointer;
         }
         .btn:hover {
             background: #0062cc;
@@ -46,38 +74,40 @@
         }
         .btn-secondary {
             background: #ff3b30;
-            padding: 5px 15px;
+            padding: 8px 18px;
         }
         .btn-secondary:hover {
             background: #dc2626;
-            transform: translateY(-2px);
         }
         .btn-edit {
             background: #34c759;
-            padding: 5px 15px;
+            padding: 8px 18px;
         }
         .btn-edit:hover {
             background: #2ea44f;
-            transform: translateY(-2px);
         }
         .btn-delivered {
             background: #f59e0b;
-            padding: 5px 15px;
+            padding: 8px 18px;
         }
         .btn-delivered:hover {
             background: #d97706;
-            transform: translateY(-2px);
         }
         .input {
             background: #2c2c2e;
             border: none;
             color: #fff;
-            padding: 12px;
-            border-radius: 10px;
+            padding: 14px;
+            border-radius: 12px;
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             font-size: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: background 0.2s ease;
+        }
+        .input:focus {
+            background: #343436;
+            outline: none;
         }
         .notification {
             position: fixed;
@@ -86,9 +116,9 @@
             transform: translateX(-50%);
             background: #34c759;
             padding: 12px 24px;
-            border-radius: 12px;
+            border-radius: 14px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
             z-index: 1000;
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -102,18 +132,18 @@
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
+            gap: 20px;
         }
         .menu-list .menu-item, .order-item {
             background: #2c2c2e;
-            padding: 15px;
-            border-radius: 12px;
+            padding: 20px;
+            border-radius: 14px;
             margin-bottom: 15px;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         .menu-list .menu-item:hover, .order-item:hover {
             transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
         }
         .menu-item h4, .order-item h4 {
             margin: 0 0 10px;
@@ -122,28 +152,87 @@
         }
         .menu-item p, .order-item p {
             margin: 5px 0;
-            font-size: 0.9rem;
-            opacity: 0.8;
+            font-size: 0.95rem;
+            opacity: 0.85;
         }
         .menu-item .details { margin-top: 15px; }
-        .variation { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
-        .variation input { flex: 1; }
-        .variation .input-price { width: 90px; }
-        .menu-details { background: #252527; padding: 15px; border-radius: 10px; margin-top: 15px; }
-        .menu-details p { margin: 0; font-size: 0.95rem; opacity: 0.9; }
-        .menu-details h5 { font-size: 1.1rem; font-weight: 600; margin: 10px 0 5px; }
-        @media (max-width: 640px) {
-            .container { padding: 15px; }
-            .section { padding: 20px; }
-            .btn { padding: 8px 15px; font-size: 0.9rem; }
-            .input { font-size: 0.9rem; }
+        .variation { 
+            display: flex; 
+            gap: 15px; 
+            margin-bottom: 15px; 
+            align-items: center; 
         }
+        .variation input { flex: 1; }
+        .variation .input-price { width: 100px; }
+        .menu-details { 
+            background: #343436; 
+            padding: 15px; 
+            border-radius: 12px; 
+            margin-top: 15px; 
+        }
+        .menu-details p { 
+            margin: 0; 
+            font-size: 0.95rem; 
+            opacity: 0.9; 
+        }
+        .menu-details h5 { 
+            font-size: 1.1rem; 
+            font-weight: 600; 
+            margin: 10px 0 5px; 
+        }
+        /* Footer Navigation */
+        .footer-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(44, 44, 46, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 15px 20px; /* Increased padding */
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        .footer-nav button {
+    background: none;
+    color: #a1a1a6;
+    padding: 10px 14px; /* Adjusted padding for vertical layout */
+    font-size: 0.9rem; /* Slightly smaller font for mobile fit */
+    font-weight: 500;
+    border-radius: 14px;
+    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column; /* Stack icon above text */
+    align-items: center;
+    gap: 4px; /* Reduced gap for tighter fit */
+}
+
+.footer-nav button i {
+    font-size: 1.2rem; /* Consistent icon size */
+}
+.footer-nav button span {
+    display: block; /* Ensure text is on a new line */
+}
+        .footer-nav button.active {
+            background: #007aff;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .footer-nav button:hover {
+            color: #fff;
+        }
+        @media (max-width: 640px) {
+    .footer-nav { padding: 10px 10px; } /* Slightly tighter padding on mobile */
+    .footer-nav button { font-size: 0.8rem; padding: 8px 12px; } /* Adjusted for mobile */
+    .footer-nav button i { font-size: 1.1rem; }
+}
         input, textarea {
             font-size: 16px;
             outline: none;
-        }
-        *:focus {
-            zoom: 1 !important;
         }
         html, body {
             -webkit-text-size-adjust: none;
@@ -154,28 +243,18 @@
 <body>
     <div class="container">
         <h1 class="text-4xl font-semibold text-center mb-4">🏪 <span id="restaurant-name">Vendor Portal</span></h1>
-        <p id="welcome-message" class="text-center text-gray-400 mb-8">Manage your culinary empire with elegance.</p>
+        <p id="welcome-message" class="text-center text-gray-400 mb-12">Manage your culinary empire with elegance.</p>
 
         <div id="notification" class="notification"></div>
 
-        <div class="grid mb-8">
-            <button id="manage-store-btn" class="btn">Manage Store</button>
-            <button id="manage-menu-btn" class="btn">Manage Menu</button>
-            <button id="view-orders-btn" class="btn">View Orders</button>
-            <button id="delivery-btn" class="btn">Delivery</button>
-            <button id="delivered-btn" class="btn">Delivered Orders</button>
-            <button id="not-delivered-btn" class="btn">Not Delivered Orders</button>
-            <button id="settings-btn" class="btn">Settings</button>
-        </div>
-
-        <div id="manage-store" class="section hidden">
-            <h2 class="text-2xl font-semibold mb-4">Manage Store</h2>
-            <form id="store-form">
-                <input type="text" id="store-name" placeholder="Store Name" class="input">
-                <input type="text" id="store-image" placeholder="Image URL" class="input">
-                <button type="submit" class="btn w-full">Update Store</button>
-            </form>
-            <button id="delete-store" class="btn btn-secondary w-full mt-2">Delete Store</button>
+        <div id="store" class="section">
+            <h2 class="text-2xl font-semibold mb-4">Welcome, <span id="store-name-display">Vendor</span></h2>
+            <p class="text-center mb-6">Control your shop’s status below.</p>
+            <div class="flex gap-4 justify-center">
+                <button id="open-shop-btn" class="btn btn-edit">Open Shop</button>
+                <button id="close-shop-btn" class="btn btn-secondary">Close Shop</button>
+            </div>
+            <p id="shop-status" class="text-center mt-6">Shop Status: <span id="status-text">Closed</span></p>
         </div>
 
         <div id="manage-menu" class="section hidden">
@@ -201,20 +280,32 @@
         </div>
 
         <div id="delivered" class="section hidden">
-            <h2 class="text-2xl font-semibold mb-4">Delivered Orders</h2>
-            <div id="delivered-list">Loading delivered orders...</div>
-        </div>
-
-        <div id="not-delivered" class="section hidden">
-            <h2 class="text-2xl font-semibold mb-4">Not Delivered Orders</h2>
-            <div id="not-delivered-list">Loading not delivered orders...</div>
+            <h2 class="text-2xl font-semibold mb-4">Delivery Status</h2>
+            <div id="delivered-list">Loading delivery status...</div>
         </div>
 
         <div id="settings" class="section hidden">
             <h2 class="text-2xl font-semibold mb-4">Settings</h2>
-            <p class="text-gray-400">Store settings coming soon.</p>
+            <h3 class="text-xl font-semibold mb-4">Manage Store</h3>
+            <form id="store-form" class="mb-6">
+                <input type="text" id="store-name" placeholder="Store Name" class="input">
+                <input type="text" id="store-image" placeholder="Image URL" class="input">
+                <button type="submit" class="btn w-full">Update Store</button>
+            </form>
+            <button id="delete-store" class="btn btn-secondary w-full mt-2">Delete Store</button>
+            <p class="text-gray-400 mt-6">More settings coming soon.</p>
         </div>
     </div>
+
+<!-- Footer Navigation -->
+<div class="footer-nav">
+    <button id="store-btn" class="active"><i class="fas fa-store"></i><span>Store</span></button>
+    <button id="manage-menu-btn"><i class="fas fa-utensils"></i><span>Menu</span></button>
+    <button id="view-orders-btn"><i class="fas fa-shopping-cart"></i><span>Orders</span></button>
+    <button id="delivery-btn"><i class="fas fa-motorcycle"></i><span>Delivery</span></button>
+    <button id="delivered-btn"><i class="fas fa-check-circle"></i><span>Status</span></button>
+    <button id="settings-btn"><i class="fas fa-cog"></i><span>Settings</span></button>
+</div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
@@ -246,13 +337,16 @@
         }
 
         function toggleSection(sectionId) {
-            const sections = ["manage-store", "manage-menu", "view-orders", "delivery", "delivered", "not-delivered", "settings"];
+            const sections = ["store", "manage-menu", "view-orders", "delivery", "delivered", "settings"];
             sections.forEach(id => {
                 document.getElementById(id).classList.toggle("hidden", id !== sectionId);
             });
+            const buttons = document.querySelectorAll(".footer-nav button");
+            buttons.forEach(btn => {
+                btn.classList.toggle("active", btn.id === `${sectionId}-btn`);
+            });
         }
 
-        // Function to validate orders and filter out those with "undefined" values
         const isValidOrder = (order) => {
             if (!order.items || !Array.isArray(order.items)) return false;
             return order.items.every(item => 
@@ -273,6 +367,9 @@
                     document.getElementById("store-image").value = data.image || "";
                     document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"} Portal`;
                     document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
+                    document.getElementById("store-name-display").textContent = data.name || "Vendor";
+                    const isOpen = data.isOpen || false;
+                    document.getElementById("status-text").textContent = isOpen ? "Open" : "Closed";
                 } else {
                     showNotification("Restaurant not found!", "error");
                 }
@@ -418,7 +515,7 @@
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    ordersList.innerHTML = "<p class='text-gray-400'>No orders found for King Gabby yet.</p>";
+                    ordersList.innerHTML = "<p class='text-gray-400'>No orders yet.</p>";
                     return;
                 }
                 const orders = [];
@@ -442,7 +539,6 @@
                                 <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
                                 <p><strong>Order ID:</strong> ${order.id}</p>
                                 <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                                
                                 <p><strong>Note:</strong> ${order.note || "None"}</p>
                                 <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
                             </div>
@@ -488,12 +584,7 @@
                                 <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
                                 <p><strong>Order ID:</strong> ${order.id}</p>
                                 <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                                
-                                
                                 <p><strong>Note:</strong> ${order.note || "None"}</p>
-                                
-                                
-                                
                                 <p><strong>Status:</strong> ${order.status}</p>
                                 <div class="flex gap-4 mt-3">
                                     <button class="btn btn-edit delivered-btn" data-order-id="${order.id}">Mark as Delivered</button>
@@ -522,7 +613,7 @@
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    deliveredList.innerHTML = "<p class='text-gray-400'>No delivered orders yet.</p>";
+                    deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
                     return;
                 }
                 const orders = [];
@@ -532,7 +623,7 @@
                 orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 let output = "";
                 orders.forEach(order => {
-                    if (order.status === "delivered") {
+                    if (order.status === "delivered" || order.status === "not_delivered") {
                         const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
                         const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
                         const deliveryDetails = order.deliveryDetails || {};
@@ -551,53 +642,11 @@
                         `;
                     }
                 });
-                deliveredList.innerHTML = output || "<p class='text-gray-400'>No delivered orders yet.</p>";
+                deliveredList.innerHTML = output || "<p class='text-gray-400'>No delivery status yet.</p>";
             }, (error) => {
-                showNotification("Error loading delivered orders!", "error");
+                showNotification("Error loading delivery status!", "error");
                 console.error("Error in loadDeliveredOrders:", error);
-                deliveredList.innerHTML = "<p class='text-gray-400'>Error loading delivered orders.</p>";
-            });
-        }
-
-        function loadNotDeliveredOrders() {
-            const notDeliveredList = document.getElementById("not-delivered-list");
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                if (snapshot.empty) {
-                    notDeliveredList.innerHTML = "<p class='text-gray-400'>No not delivered orders yet.</p>";
-                    return;
-                }
-                const orders = [];
-                snapshot.forEach(doc => {
-                    orders.push({ id: doc.id, ...doc.data() });
-                });
-                orders.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                let output = "";
-                orders.forEach(order => {
-                    if (order.status === "not_delivered") {
-                        const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                        const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                        const deliveryDetails = order.deliveryDetails || {};
-                        output += `
-                            <div class="order-item">
-                                <p><strong>Order ID:</strong> ${order.id}</p>
-                                <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                                <p><strong>Items:</strong> ${items}</p>
-                                <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                                <p><strong>Note:</strong> ${order.note || "None"}</p>
-                                <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                                <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
-                                <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                                <p><strong>Status:</strong> ${order.status}</p>
-                            </div>
-                        `;
-                    }
-                });
-                notDeliveredList.innerHTML = output || "<p class='text-gray-400'>No not delivered orders yet.</p>";
-            }, (error) => {
-                showNotification("Error loading not delivered orders!", "error");
-                console.error("Error in loadNotDeliveredOrders:", error);
-                notDeliveredList.innerHTML = "<p class='text-gray-400'>Error loading not delivered orders.</p>";
+                deliveredList.innerHTML = "<p class='text-gray-400'>Error loading delivery status.</p>";
             });
         }
 
@@ -657,11 +706,33 @@
                 ));
                 await deleteDoc(doc(db, "restaurant", restaurantId));
                 showNotification("Store deleted successfully!", "error");
-                document.getElementById("manage-store").innerHTML = "<p class='text-gray-400'>Store deleted.</p>";
+                document.getElementById("settings").innerHTML = "<p class='text-gray-400'>Store deleted.</p>";
                 loadRestaurantData();
             } catch (error) {
                 showNotification("Error deleting store!", "error");
                 console.error("Error in delete-store:", error);
+            }
+        });
+
+        document.getElementById("open-shop-btn").addEventListener("click", async () => {
+            try {
+                await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
+                showNotification("Shop opened!");
+                loadRestaurantData();
+            } catch (error) {
+                showNotification("Error opening shop!", "error");
+                console.error("Error in open-shop-btn:", error);
+            }
+        });
+
+        document.getElementById("close-shop-btn").addEventListener("click", async () => {
+            try {
+                await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
+                showNotification("Shop closed!");
+                loadRestaurantData();
+            } catch (error) {
+                showNotification("Error closing shop!", "error");
+                console.error("Error in close-shop-btn:", error);
             }
         });
 
@@ -788,12 +859,11 @@
             }
         }
 
-        document.getElementById("manage-store-btn").addEventListener("click", () => toggleSection("manage-store"));
+        document.getElementById("store-btn").addEventListener("click", () => toggleSection("store"));
         document.getElementById("manage-menu-btn").addEventListener("click", () => { toggleSection("manage-menu"); loadMenu(); });
         document.getElementById("view-orders-btn").addEventListener("click", () => { toggleSection("view-orders"); loadOrders(); });
         document.getElementById("delivery-btn").addEventListener("click", () => { toggleSection("delivery"); loadDeliveryOrders(); });
         document.getElementById("delivered-btn").addEventListener("click", () => { toggleSection("delivered"); loadDeliveredOrders(); });
-        document.getElementById("not-delivered-btn").addEventListener("click", () => { toggleSection("not-delivered"); loadNotDeliveredOrders(); });
         document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
 
         document.addEventListener("DOMContentLoaded", async () => {
@@ -802,8 +872,21 @@
             loadOrders();
             loadDeliveryOrders();
             loadDeliveredOrders();
-            loadNotDeliveredOrders();
         });
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
