@@ -9,12 +9,13 @@
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* Your existing styles remain unchanged */
         body {
             background: #1c1c1e;
             color: #ffffff;
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
-            padding: 0 0 100px 0; /* Increased space for larger footer */
+            padding: 0 0 100px 0;
             min-height: 100vh;
             -webkit-user-select: none;
             -ms-user-select: none;
@@ -22,226 +23,61 @@
             -webkit-touch-callout: none;
             overflow-x: hidden;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 30px 20px;
-            position: relative;
-        }
-        .section {
-            background: #252527;
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
-            transition: transform 0.3s ease, opacity 0.3s ease;
-        }
-        .section.hidden {
-            transform: translateY(20px);
-            opacity: 0;
-            pointer-events: none;
-        }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        h2 {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-        p {
-            font-size: 1.1rem;
-            opacity: 0.8;
-        }
-        .btn {
-            background: #007aff;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 14px;
-            font-weight: 500;
-            text-align: center;
-            transition: background 0.2s ease, transform 0.2s ease;
-            border: none;
-            cursor: pointer;
-        }
-        .btn:hover {
-            background: #0062cc;
-            transform: translateY(-2px);
-        }
-        .btn-secondary {
-            background: #ff3b30;
-            padding: 8px 18px;
-        }
-        .btn-secondary:hover {
-            background: #dc2626;
-        }
-        .btn-edit {
-            background: #34c759;
-            padding: 8px 18px;
-        }
-        .btn-edit:hover {
-            background: #2ea44f;
-        }
-        .btn-delivered {
-            background: #f59e0b;
-            padding: 8px 18px;
-        }
-        .btn-delivered:hover {
-            background: #d97706;
-        }
-        .input {
-            background: #2c2c2e;
-            border: none;
-            color: #fff;
-            padding: 14px;
-            border-radius: 12px;
-            width: 100%;
-            margin-bottom: 15px;
-            font-size: 1rem;
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
-            transition: background 0.2s ease;
-        }
-        .input:focus {
-            background: #343436;
-            outline: none;
-        }
-        .notification {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #34c759;
-            padding: 12px 24px;
-            border-radius: 14px;
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-            z-index: 1000;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .notification.show {
-            opacity: 1;
-        }
-        .notification.error {
-            background: #ff3b30;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 20px;
-        }
-        .menu-list .menu-item, .order-item {
-            background: #2c2c2e;
-            padding: 20px;
-            border-radius: 14px;
-            margin-bottom: 15px;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-        .menu-list .menu-item:hover, .order-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
-        }
-        .menu-item h4, .order-item h4 {
-            margin: 0 0 10px;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        .menu-item p, .order-item p {
-            margin: 5px 0;
-            font-size: 0.95rem;
-            opacity: 0.85;
-        }
+        .container { max-width: 900px; margin: 0 auto; padding: 30px 20px; position: relative; }
+        .section { background: #252527; border-radius: 20px; padding: 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6); transition: transform 0.3s ease, opacity 0.3s ease; }
+        .section.hidden { transform: translateY(20px); opacity: 0; pointer-events: none; }
+        h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.5px; text-align: center; margin-bottom: 10px; }
+        h2 { font-size: 1.75rem; font-weight: 600; margin-bottom: 20px; }
+        p { font-size: 1.1rem; opacity: 0.8; }
+        .btn { background: #007aff; color: #fff; padding: 12px 24px; border-radius: 14px; font-weight: 500; text-align: center; transition: background 0.2s ease, transform 0.2s ease; border: none; cursor: pointer; }
+        .btn:hover { background: #0062cc; transform: translateY(-2px); }
+        .btn-secondary { background: #ff3b30; padding: 8px 18px; }
+        .btn-secondary:hover { background: #dc2626; }
+        .btn-edit { background: #34c759; padding: 8px 18px; }
+        .btn-edit:hover { background: #2ea44f; }
+        .btn-delivered { background: #f59e0b; padding: 8px 18px; }
+        .btn-delivered:hover { background: #d97706; }
+        .input { background: #2c2c2e; border: none; color: #fff; padding: 14px; border-radius: 12px; width: 100%; margin-bottom: 15px; font-size: 1rem; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3); transition: background 0.2s ease; }
+        .input:focus { background: #343436; outline: none; }
+        .notification { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #34c759; padding: 12px 24px; border-radius: 14px; text-align: center; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); z-index: 1000; opacity: 0; transition: opacity 0.3s ease; }
+        .notification.show { opacity: 1; }
+        .notification.error { background: #ff3b30; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+        .menu-list .menu-item, .order-item { background: #2c2c2e; padding: 20px; border-radius: 14px; margin-bottom: 15px; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .menu-list .menu-item:hover, .order-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4); }
+        .menu-item h4, .order-item h4 { margin: 0 0 10px; font-size: 1.25rem; font-weight: 600; }
+        .menu-item p, .order-item p { margin: 5px 0; font-size: 0.95rem; opacity: 0.85; }
         .menu-item .details { margin-top: 15px; }
-        .variation { 
-            display: flex; 
-            gap: 15px; 
-            margin-bottom: 15px; 
-            align-items: center; 
-        }
+        .variation { display: flex; gap: 15px; margin-bottom: 15px; align-items: center; }
         .variation input { flex: 1; }
         .variation .input-price { width: 100px; }
-        .menu-details { 
-            background: #343436; 
-            padding: 15px; 
-            border-radius: 12px; 
-            margin-top: 15px; 
-        }
-        .menu-details p { 
-            margin: 0; 
-            font-size: 0.95rem; 
-            opacity: 0.9; 
-        }
-        .menu-details h5 { 
-            font-size: 1.1rem; 
-            font-weight: 600; 
-            margin: 10px 0 5px; 
-        }
-        /* Footer Navigation */
-        .footer-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(44, 44, 46, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 15px 20px; /* Increased padding */
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-        }
-        .footer-nav button {
-    background: none;
-    color: #a1a1a6;
-    padding: 10px 14px; /* Adjusted padding for vertical layout */
-    font-size: 0.9rem; /* Slightly smaller font for mobile fit */
-    font-weight: 500;
-    border-radius: 14px;
-    transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column; /* Stack icon above text */
-    align-items: center;
-    gap: 4px; /* Reduced gap for tighter fit */
-}
-
-.footer-nav button i {
-    font-size: 1.2rem; /* Consistent icon size */
-}
-.footer-nav button span {
-    display: block; /* Ensure text is on a new line */
-}
-        .footer-nav button.active {
-            background: #007aff;
-            color: #fff;
-            transform: scale(1.05);
-        }
-        .footer-nav button:hover {
-            color: #fff;
-        }
-        @media (max-width: 640px) {
-    .footer-nav { padding: 10px 10px; } /* Slightly tighter padding on mobile */
-    .footer-nav button { font-size: 0.8rem; padding: 8px 12px; } /* Adjusted for mobile */
-    .footer-nav button i { font-size: 1.1rem; }
-}
-        input, textarea {
-            font-size: 16px;
-            outline: none;
-        }
-        html, body {
-            -webkit-text-size-adjust: none;
-            touch-action: manipulation;
-        }
+        .menu-details { background: #343436; padding: 15px; border-radius: 12px; margin-top: 15px; }
+        .menu-details p { margin: 0; font-size: 0.95rem; opacity: 0.9; }
+        .menu-details h5 { font-size: 1.1rem; font-weight: 600; margin: 10px 0 5px; }
+        .footer-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(44, 44, 46, 0.95); backdrop-filter: blur(20px); padding: 15px 20px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5); z-index: 1000; }
+        .footer-nav button { background: none; color: #a1a1a6; padding: 10px 14px; font-size: 0.9rem; font-weight: 500; border-radius: 14px; transition: color 0.2s ease, background 0.2s ease, transform 0.2s ease; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .footer-nav button i { font-size: 1.2rem; }
+        .footer-nav button span { display: block; }
+        .footer-nav button.active { background: #007aff; color: #fff; transform: scale(1.05); }
+        .footer-nav button:hover { color: #fff; }
+        @media (max-width: 640px) { .footer-nav { padding: 10px 10px; } .footer-nav button { font-size: 0.8rem; padding: 8px 12px; } .footer-nav button i { font-size: 1.1rem; } }
+        input, textarea { font-size: 16px; outline: none; }
+        html, body { -webkit-text-size-adjust: none; touch-action: manipulation; }
+        /* Login-specific styles */
+        #login-section { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        #login-section.hidden { display: none; }
+        #logout-btn { background: #ff3b30; margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div id="login-section" class="section">
+        <h1 class="text-4xl font-semibold mb-6">Vendor Login</h1>
+        <input type="email" id="email" placeholder="Email" class="input">
+        <input type="password" id="password" placeholder="Password" class="input">
+        <button id="login-btn" class="btn w-full">Login</button>
+    </div>
+
+    <div id="main-content" class="container hidden">
         <h1 class="text-4xl font-semibold text-center mb-4">🏪 <span id="restaurant-name">Vendor Portal</span></h1>
         <p id="welcome-message" class="text-center text-gray-400 mb-12">Manage your culinary empire with elegance.</p>
 
@@ -293,25 +129,28 @@
                 <button type="submit" class="btn w-full">Update Store</button>
             </form>
             <button id="delete-store" class="btn btn-secondary w-full mt-2">Delete Store</button>
+            <button id="logout-btn" class="btn btn-secondary w-full mt-2">Logout</button>
             <p class="text-gray-400 mt-6">More settings coming soon.</p>
         </div>
-    </div>
 
-<!-- Footer Navigation -->
-<div class="footer-nav">
-    <button id="store-btn" class="active"><i class="fas fa-store"></i><span>Store</span></button>
-    <button id="manage-menu-btn"><i class="fas fa-utensils"></i><span>Menu</span></button>
-    <button id="view-orders-btn"><i class="fas fa-shopping-cart"></i><span>Orders</span></button>
-    <button id="delivery-btn"><i class="fas fa-motorcycle"></i><span>Delivery</span></button>
-    <button id="delivered-btn"><i class="fas fa-check-circle"></i><span>Status</span></button>
-    <button id="settings-btn"><i class="fas fa-cog"></i><span>Settings</span></button>
-</div>
+        <div class="footer-nav">
+            <button id="store-btn" class="active"><i class="fas fa-store"></i><span>Store</span></button>
+            <button id="manage-menu-btn"><i class="fas fa-utensils"></i><span>Menu</span></button>
+            <button id="view-orders-btn"><i class="fas fa-shopping-cart"></i><span>Orders</span></button>
+            <button id="delivery-btn"><i class="fas fa-motorcycle"></i><span>Delivery</span></button>
+            <button id="delivered-btn"><i class="fas fa-check-circle"></i><span>Status</span></button>
+            <button id="settings-btn"><i class="fas fa-cog"></i><span>Settings</span></button>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
         import { 
             getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
         } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
@@ -325,7 +164,8 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const restaurantId = "IHvLe6CCwUKl9FC2o3Dq";
+        const auth = getAuth(app);
+        let restaurantId = null;
         let selectedMenuId = null;
 
         function showNotification(message, type = "success") {
@@ -358,6 +198,7 @@
         };
 
         async function loadRestaurantData() {
+            if (!restaurantId) return;
             try {
                 const docRef = doc(db, "restaurant", restaurantId);
                 const docSnap = await getDoc(docRef);
@@ -380,6 +221,7 @@
         }
 
         async function loadMenu() {
+            if (!restaurantId) return;
             try {
                 const menuList = document.getElementById("menu-list");
                 menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
@@ -511,11 +353,12 @@
         }
 
         function loadOrders() {
+            if (!restaurantId) return;
             const ordersList = document.getElementById("orders-list");
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
                 if (snapshot.empty) {
-                    ordersList.innerHTML = "<p class='text-gray-400'>No orders found  yet.</p>";
+                    ordersList.innerHTML = "<p class='text-gray-400'>No orders found yet.</p>";
                     return;
                 }
                 const orders = [];
@@ -557,6 +400,7 @@
         }
 
         function loadDeliveryOrders() {
+            if (!restaurantId) return;
             const deliveryList = document.getElementById("delivery-list");
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
@@ -609,6 +453,7 @@
         }
 
         function loadDeliveredOrders() {
+            if (!restaurantId) return;
             const deliveredList = document.getElementById("delivered-list");
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
@@ -859,20 +704,77 @@
             }
         }
 
+        // Authentication Logic
+        document.getElementById("login-btn").addEventListener("click", async () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                const mappingRef = doc(db, "vendorMappings", user.email);
+                const mappingSnap = await getDoc(mappingRef);
+                if (mappingSnap.exists()) {
+                    restaurantId = mappingSnap.data().restaurantId;
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("main-content").classList.remove("hidden");
+                    loadRestaurantData();
+                    loadMenu();
+                    loadOrders();
+                    loadDeliveryOrders();
+                    loadDeliveredOrders();
+                } else {
+                    showNotification("No restaurant assigned to this email!", "error");
+                    signOut(auth);
+                }
+            } catch (error) {
+                showNotification("Login failed: " + error.message, "error");
+                console.error("Error in login:", error);
+            }
+        });
+
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            try {
+                await signOut(auth);
+                document.getElementById("main-content").classList.add("hidden");
+                document.getElementById("login-section").classList.remove("hidden");
+                restaurantId = null;
+                showNotification("Logged out successfully!");
+            } catch (error) {
+                showNotification("Error logging out!", "error");
+                console.error("Error in logout:", error);
+            }
+        });
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const mappingRef = doc(db, "vendorMappings", user.email);
+                const mappingSnap = await getDoc(mappingRef);
+                if (mappingSnap.exists()) {
+                    restaurantId = mappingSnap.data().restaurantId;
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("main-content").classList.remove("hidden");
+                    loadRestaurantData();
+                    loadMenu();
+                    loadOrders();
+                    loadDeliveryOrders();
+                    loadDeliveredOrders();
+                } else {
+                    signOut(auth);
+                    showNotification("No restaurant assigned to this email!", "error");
+                }
+            } else {
+                document.getElementById("main-content").classList.add("hidden");
+                document.getElementById("login-section").classList.remove("hidden");
+                restaurantId = null;
+            }
+        });
+
         document.getElementById("store-btn").addEventListener("click", () => toggleSection("store"));
         document.getElementById("manage-menu-btn").addEventListener("click", () => { toggleSection("manage-menu"); loadMenu(); });
         document.getElementById("view-orders-btn").addEventListener("click", () => { toggleSection("view-orders"); loadOrders(); });
         document.getElementById("delivery-btn").addEventListener("click", () => { toggleSection("delivery"); loadDeliveryOrders(); });
         document.getElementById("delivered-btn").addEventListener("click", () => { toggleSection("delivered"); loadDeliveredOrders(); });
         document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            await loadRestaurantData();
-            await loadMenu();
-            loadOrders();
-            loadDeliveryOrders();
-            loadDeliveredOrders();
-        });
     </script>
 
     <script>
@@ -888,3 +790,5 @@
             });
         }
     </script>
+</body>
+</html>
