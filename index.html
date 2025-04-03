@@ -43,10 +43,16 @@
         }
         h1 {
             font-size: clamp(1.5rem, 5vw, 2.5rem); /* Responsive font size */
-            font-weight: 700;
-            letter-spacing: -0.03125rem;
-            text-align: center;
-            margin-bottom: 0.625rem;
+            font-weight: 600;
+            letter-spacing: -2px;
+            margin: 0;
+            background: linear-gradient(45deg, #007aff, #34c759, #007aff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+            position: relative;
+            z-index: 1;
         }
         h2 {
             font-size: clamp(1.25rem, 4vw, 1.75rem);
@@ -198,7 +204,7 @@
             width: 100%;
             background: rgba(44, 44, 46, 0.95);
             backdrop-filter: blur(1.25rem);
-            padding: 0.625rem 1rem;
+            padding: 10px;
             display: flex;
             justify-content: space-around;
             align-items: center;
@@ -292,7 +298,7 @@
     </div>
 
     <div id="main-content" class="container hidden">
-        <h1 class="text-4xl font-semibold text-center mb-4">🏪 <span id="restaurant-name">Vendor Portal</span></h1>
+        <h1 class="text-4xl font-semibold text-center mb-4"><span id="restaurant-name">Vendor Portal</span></h1>
         <p id="welcome-message" class="text-center text-gray-400 mb-12">Manage your culinary empire with elegance.</p>
 
         <div id="notification" class="notification"></div>
