@@ -306,6 +306,36 @@
             background: #ff3b30;
             margin-top: 1.5rem;
         }
+        /* Dashboard-specific styles */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .dashboard-card {
+            background: #2c2c2e;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: center;
+            transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-0.1rem);
+            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
+        }
+        .dashboard-card h3 {
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+        }
+        .dashboard-card p {
+            font-size: clamp(1.25rem, 3vw, 1.5rem);
+            font-weight: 700;
+            color: #34c759;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
@@ -329,14 +359,17 @@
         <div id="notification" class="notification"></div>
 
         <div id="store" class="section">
-            <h2 class="text-2xl font-semibold mb-4">Welcome, Vendor</h2>
             <p class="text-center mb-6">Control your shop’s status below.</p>
             <div class="flex gap-4 justify-center flex-wrap">
                 <button id="open-shop-btn" class="btn btn-edit">Open Shop</button>
                 <button id="close-shop-btn" class="btn btn-secondary">Close Shop</button>
             </div>
             <p id="shop-status" class="text-center mt-6">Shop Status: <span id="status-text">Closed</span></p>
-        </div>
+        
+        <br><hr><br>
+            <h2 class="text-2xl font-semibold mb-4">Today’s Dashboard</h2>
+            <div class="dashboard-grid" id="dashboard-grid"></div>
+            </div>
 
         <div id="manage-menu" class="section hidden">
             <h2 class="text-2xl font-semibold mb-4">Manage Menu</h2>
@@ -384,448 +417,513 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { 
-    getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-import { 
-    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { 
+            getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
+        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-// Firebase config (unchanged)
-const firebaseConfig = {
-    apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
-    authDomain: "von600-7982d.firebaseapp.com",
-    projectId: "von600-7982d",
-    storageBucket: "von600-7982d.appspot.com",
-    messagingSenderId: "164591218045",
-    appId: "1:164591218045:web:afe17512e16573e7903014",
-    measurementId: "G-E69DMPLXBK"
-};
+        // Firebase config (unchanged)
+        const firebaseConfig = {
+            apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
+            authDomain: "von600-7982d.firebaseapp.com",
+            projectId: "von600-7982d",
+            storageBucket: "von600-7982d.appspot.com",
+            messagingSenderId: "164591218045",
+            appId: "1:164591218045:web:afe17512e16573e7903014",
+            measurementId: "G-E69DMPLXBK"
+        };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-let restaurantId = null;
-let selectedMenuId = null;
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let restaurantId = null;
+        let selectedMenuId = null;
 
-// Cache DOM elements
-const loadingScreen = document.getElementById("loading-screen");
-const loginSection = document.getElementById("login-section");
-const mainContent = document.getElementById("main-content");
-const notification = document.getElementById("notification");
-const menuList = document.getElementById("menu-list");
-const ordersList = document.getElementById("orders-list");
-const deliveredList = document.getElementById("delivered-list");
+        // Cache DOM elements
+        const loadingScreen = document.getElementById("loading-screen");
+        const loginSection = document.getElementById("login-section");
+        const mainContent = document.getElementById("main-content");
+        const notification = document.getElementById("notification");
+        const menuList = document.getElementById("menu-list");
+        const ordersList = document.getElementById("orders-list");
+        const deliveredList = document.getElementById("delivered-list");
+        const dashboardGrid = document.getElementById("dashboard-grid");
 
-// Fast notification function
-function showNotification(message, type = "success") {
-    notification.textContent = message;
-    notification.className = `notification ${type === "error" ? "error" : ""} show`;
-    setTimeout(() => notification.classList.remove("show"), 3000);
-}
-
-// Efficient section toggling
-function toggleSection(sectionId) {
-    const sections = ["store", "manage-menu", "view-orders", "delivered", "settings"];
-    sections.forEach(id => {
-        document.getElementById(id).classList.toggle("hidden", id !== sectionId);
-        document.getElementById(`${id}-btn`).classList.toggle("active", id === sectionId);
-    });
-}
-
-// Validate order data
-const isValidOrder = (order) => {
-    if (!order.items || !Array.isArray(order.items)) return false;
-    return order.items.every(item => 
-        typeof item.name === "string" && item.name !== "undefined" &&
-        typeof item.quantity === "number" && !isNaN(item.quantity) &&
-        typeof item.price === "number" && !isNaN(item.price) &&
-        typeof item.total === "number" && !isNaN(item.total)
-    );
-};
-
-// Load restaurant data
-async function loadRestaurantData() {
-    if (!restaurantId) return;
-    const docRef = doc(db, "restaurant", restaurantId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        document.getElementById("store-name").value = data.name || "";
-        document.getElementById("store-image").value = data.image || "";
-        document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"}`;
-        document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
-        const isOpen = data.isOpen || false;
-        document.getElementById("status-text").textContent = isOpen ? "Open" : "Closed";
-    }
-}
-
-// Load menu items
-async function loadMenu() {
-    if (!restaurantId) return;
-    menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
-    const menuRef = collection(db, "restaurant", restaurantId, "menu");
-    const querySnapshot = await getDocs(menuRef);
-    const fragment = document.createDocumentFragment();
-    querySnapshot.forEach(docSnapshot => {
-        const data = docSnapshot.data();
-        const item = document.createElement("div");
-        item.className = "menu-item";
-        item.dataset.id = docSnapshot.id;
-        item.innerHTML = `
-            <h4>${data.name}</h4>
-            <p>Price: GH₵${data.price.toFixed(2)}</p>
-            <div id="details-${docSnapshot.id}" class="menu-details hidden"></div>
-            <div id="edit-${docSnapshot.id}" class="details hidden"></div>
-        `;
-        item.addEventListener("click", (e) => {
-            if (!e.target.closest("button")) showMenuDetails(docSnapshot.id);
-        });
-        fragment.appendChild(item);
-    });
-    menuList.innerHTML = "";
-    menuList.appendChild(fragment);
-    if (!querySnapshot.size) menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet.</p>";
-}
-
-// Show menu details
-async function showMenuDetails(menuId) {
-    if (selectedMenuId === menuId && !document.getElementById(`details-${menuId}`).classList.contains("hidden")) {
-        document.getElementById(`details-${menuId}`).classList.remove("hidden");
-        return;
-    }
-    selectedMenuId = menuId;
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const data = docSnap.data();
-    const sizes = data.sizes || [];
-    const extras = data.extras || [];
-    const detailsDiv = document.getElementById(`details-${menuId}`);
-    detailsDiv.innerHTML = `
-        <p>Sizes: ${sizes.length ? sizes.map(s => `${s.name} (GH₵${s.price.toFixed(2)})`).join(", ") : "None"}</p>
-        <p>Extras: ${extras.length ? extras.map(e => `${e.name} (GH₵${e.price.toFixed(2)})`).join(", ") : "None"}</p>
-        <div class="flex gap-4 mt-3 justify-center flex-wrap">
-            <button class="btn btn-edit" data-menu-id="${menuId}">Edit</button>
-            <button class="btn btn-secondary delete-menu-btn" data-menu-id="${menuId}">Delete</button>
-        </div>
-    `;
-    detailsDiv.classList.remove("hidden");
-    document.querySelectorAll(".menu-item").forEach(item => {
-        if (item.dataset.id !== menuId) {
-            document.getElementById(`details-${item.dataset.id}`).classList.add("hidden");
-            document.getElementById(`edit-${item.dataset.id}`).classList.add("hidden");
+        // Fast notification function
+        function showNotification(message, type = "success") {
+            notification.textContent = message;
+            notification.className = `notification ${type === "error" ? "error" : ""} show`;
+            setTimeout(() => notification.classList.remove("show"), 3000);
         }
-    });
-    detailsDiv.querySelector(".btn-edit").addEventListener("click", () => showEditMenu(menuId));
-    detailsDiv.querySelector(".delete-menu-btn").addEventListener("click", () => deleteMenuItem(menuId));
-}
 
-// Show edit menu form
-async function showEditMenu(menuId) {
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const data = docSnap.data();
-    const sizes = data.sizes || [];
-    const extras = data.extras || [];
-    const editDiv = document.getElementById(`edit-${menuId}`);
-    editDiv.innerHTML = `
-        <label class="block text-sm opacity-90 mb-1">Name</label>
-        <input type="text" id="name-${menuId}" value="${data.name}" class="input">
-        <label class="block text-sm opacity-90 mb-1">Price (GH₵)</label>
-        <input type="number" id="price-${menuId}" value="${data.price}" step="0.01" class="input">
-        <h5 class="text-sm font-semibold mt-3">Sizes</h5>
-        ${sizes.map((size, index) => `
-            <div class="variation" data-size-index="${index}">
-                <input type="text" value="${size.name}" id="size-name-${menuId}-${index}" class="input">
-                <input type="number" value="${size.price}" step="0.01" id="size-price-${menuId}-${index}" class="input input-price">
-                <button class="btn btn-secondary delete-size-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
-            </div>
-        `).join("") || "<p class='text-gray-400'>No sizes added</p>"}
-        <div class="variation">
-            <input type="text" placeholder="Add size" id="new-size-name-${menuId}" class="input">
-            <input type="number" placeholder="Price" step="0.01" id="new-size-price-${menuId}" class="input input-price">
-            <button class="btn add-size-btn" data-menu-id="${menuId}">Add</button>
-        </div>
-        <h5 class="text-sm font-semibold mt-3">Extras</h5>
-        ${extras.map((extra, index) => `
-            <div class="variation" data-extra-index="${index}">
-                <input type="text" value="${extra.name}" id="extra-name-${menuId}-${index}" class="input">
-                <input type="number" value="${extra.price}" step="0.01" id="extra-price-${menuId}-${index}" class="input input-price">
-                <button class="btn btn-secondary delete-extra-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
-            </div>
-        `).join("") || "<p class='text-gray-400'>No extras added</p>"}
-        <div class="variation">
-            <input type="text" placeholder="Add extra" id="new-extra-name-${menuId}" class="input">
-            <input type="number" placeholder="Price" step="0.01" id="new-extra-price-${menuId}" class="input input-price">
-            <button class="btn add-extra-btn" data-menu-id="${menuId}">Add</button>
-        </div>
-        <button class="btn w-full mt-3 save-menu-btn" data-menu-id="${menuId}">Save Changes</button>
-    `;
-    editDiv.classList.remove("hidden");
-    document.getElementById(`details-${menuId}`).classList.add("hidden");
-    editDiv.querySelectorAll(".delete-size-btn").forEach(btn => btn.addEventListener("click", () => deleteSize(btn.dataset.menuId, btn.dataset.index)));
-    editDiv.querySelectorAll(".delete-extra-btn").forEach(btn => btn.addEventListener("click", () => deleteExtra(btn.dataset.menuId, btn.dataset.index)));
-    editDiv.querySelector(".add-size-btn").addEventListener("click", () => addSize(menuId));
-    editDiv.querySelector(".add-extra-btn").addEventListener("click", () => addExtra(menuId));
-    editDiv.querySelector(".save-menu-btn").addEventListener("click", () => saveMenuItem(menuId));
-}
+        // Efficient section toggling
+        function toggleSection(sectionId) {
+            const sections = ["store", "manage-menu", "view-orders", "delivered", "settings"];
+            sections.forEach(id => {
+                document.getElementById(id).classList.toggle("hidden", id !== sectionId);
+                document.getElementById(`${id}-btn`).classList.toggle("active", id === sectionId);
+            });
+        }
 
-// Load orders
-function loadOrders() {
-    if (!restaurantId) return;
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(order => isValidOrder(order) && order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const fragment = document.createDocumentFragment();
-        orders.forEach(order => {
-            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const item = document.createElement("div");
-            item.className = "order-item";
-            item.innerHTML = `
-                <p><strong>Items:</strong> ${items}</p>
-                <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                <p><strong>Order ID:</strong> ${order.id}</p>
-                <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                <p><strong>Note:</strong> ${order.note || "None"}</p>
-                <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+        // Load dashboard data
+        function loadDashboard() {
+            if (!restaurantId) return;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTimestamp = today.getTime();
+
+            let totalOrders = 0;
+            let activeDeliveries = 0;
+            let completedToday = 0;
+
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                totalOrders = snapshot.size;
+                activeDeliveries = 0;
+                completedToday = 0;
+
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const timestamp = new Date(order.timestamp).getTime();
+
+                    if (order.status === "delivered" && timestamp >= todayTimestamp) {
+                        completedToday++;
+                    }
+                    if (order.status === "being_delivered") {
+                        activeDeliveries++;
+                    }
+                });
+
+                const totalAmountToday = snapshot.docs
+                    .filter(doc => {
+                        const order = doc.data();
+                        const timestamp = new Date(order.timestamp).getTime();
+                        return order.status === "delivered" && timestamp >= todayTimestamp;
+                    })
+                    .reduce((sum, doc) => {
+                        const order = doc.data();
+                        return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
+                    }, 0);
+
+                dashboardGrid.innerHTML = `
+                    <div class="dashboard-card">
+                        <h3>Total Orders</h3>
+                        <p>${totalOrders}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Completed Today</h3>
+                        <p>${completedToday}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Earnings Today</h3>
+                        <p>GH₵${totalAmountToday.toFixed(2)}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Active Deliveries</h3>
+                        <p>${activeDeliveries}</p>
+                    </div>
+                `;
+            }, (error) => {
+                console.error("Dashboard error:", error);
+                dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
+            });
+        }
+
+        // Validate order data
+        const isValidOrder = (order) => {
+            if (!order.items || !Array.isArray(order.items)) return false;
+            return order.items.every(item => 
+                typeof item.name === "string" && item.name !== "undefined" &&
+                typeof item.quantity === "number" && !isNaN(item.quantity) &&
+                typeof item.price === "number" && !isNaN(item.price) &&
+                typeof item.total === "number" && !isNaN(item.total)
+            );
+        };
+
+        // Load restaurant data
+        async function loadRestaurantData() {
+            if (!restaurantId) return;
+            const docRef = doc(db, "restaurant", restaurantId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById("store-name").value = data.name || "";
+                document.getElementById("store-image").value = data.image || "";
+                document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"}`;
+                document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
+                const isOpen = data.isOpen || false;
+                document.getElementById("status-text").textContent = isOpen ? "Open" : "Closed";
+            }
+        }
+
+        // Load menu items
+        async function loadMenu() {
+            if (!restaurantId) return;
+            menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
+            const menuRef = collection(db, "restaurant", restaurantId, "menu");
+            const querySnapshot = await getDocs(menuRef);
+            const fragment = document.createDocumentFragment();
+            querySnapshot.forEach(docSnapshot => {
+                const data = docSnapshot.data();
+                const item = document.createElement("div");
+                item.className = "menu-item";
+                item.dataset.id = docSnapshot.id;
+                item.innerHTML = `
+                    <h4>${data.name}</h4>
+                    <p>Price: GH₵${data.price.toFixed(2)}</p>
+                    <div id="details-${docSnapshot.id}" class="menu-details hidden"></div>
+                    <div id="edit-${docSnapshot.id}" class="details hidden"></div>
+                `;
+                item.addEventListener("click", (e) => {
+                    if (!e.target.closest("button")) showMenuDetails(docSnapshot.id);
+                });
+                fragment.appendChild(item);
+            });
+            menuList.innerHTML = "";
+            menuList.appendChild(fragment);
+            if (!querySnapshot.size) menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet.</p>";
+        }
+
+        // Show menu details
+        async function showMenuDetails(menuId) {
+            if (selectedMenuId === menuId && !document.getElementById(`details-${menuId}`).classList.contains("hidden")) {
+                document.getElementById(`details-${menuId}`).classList.remove("hidden");
+                return;
+            }
+            selectedMenuId = menuId;
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            const sizes = data.sizes || [];
+            const extras = data.extras || [];
+            const detailsDiv = document.getElementById(`details-${menuId}`);
+            detailsDiv.innerHTML = `
+                <p>Sizes: ${sizes.length ? sizes.map(s => `${s.name} (GH₵${s.price.toFixed(2)})`).join(", ") : "None"}</p>
+                <p>Extras: ${extras.length ? extras.map(e => `${e.name} (GH₵${e.price.toFixed(2)})`).join(", ") : "None"}</p>
+                <div class="flex gap-4 mt-3 justify-center flex-wrap">
+                    <button class="btn btn-edit" data-menu-id="${menuId}">Edit</button>
+                    <button class="btn btn-secondary delete-menu-btn" data-menu-id="${menuId}">Delete</button>
+                </div>
             `;
-            fragment.appendChild(item);
-        });
-        ordersList.innerHTML = "";
-        ordersList.appendChild(fragment);
-        if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
-        ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
-    });
-}
+            detailsDiv.classList.remove("hidden");
+            document.querySelectorAll(".menu-item").forEach(item => {
+                if (item.dataset.id !== menuId) {
+                    document.getElementById(`details-${item.dataset.id}`).classList.add("hidden");
+                    document.getElementById(`edit-${item.dataset.id}`).classList.add("hidden");
+                }
+            });
+            detailsDiv.querySelector(".btn-edit").addEventListener("click", () => showEditMenu(menuId));
+            detailsDiv.querySelector(".delete-menu-btn").addEventListener("click", () => deleteMenuItem(menuId));
+        }
 
-// Load delivered orders
-function loadDeliveredOrders() {
-    if (!restaurantId) return;
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(order => order.status === "delivered" || order.status === "not_delivered")
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const fragment = document.createDocumentFragment();
-        orders.forEach(order => {
-            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const deliveryDetails = order.deliveryDetails || {};
-            const item = document.createElement("div");
-            item.className = "order-item";
-            item.innerHTML = `
-                <p><strong>Order ID:</strong> ${order.id}</p>
-                <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                <p><strong>Items:</strong> ${items}</p>
-                <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                <p><strong>Note:</strong> ${order.note || "None"}</p>
-                <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
-                <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                <p><strong>Status:</strong> ${order.status}</p>
+        // Show edit menu form
+        async function showEditMenu(menuId) {
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            const sizes = data.sizes || [];
+            const extras = data.extras || [];
+            const editDiv = document.getElementById(`edit-${menuId}`);
+            editDiv.innerHTML = `
+                <label class="block text-sm opacity-90 mb-1">Name</label>
+                <input type="text" id="name-${menuId}" value="${data.name}" class="input">
+                <label class="block text-sm opacity-90 mb-1">Price (GH₵)</label>
+                <input type="number" id="price-${menuId}" value="${data.price}" step="0.01" class="input">
+                <h5 class="text-sm font-semibold mt-3">Sizes</h5>
+                ${sizes.map((size, index) => `
+                    <div class="variation" data-size-index="${index}">
+                        <input type="text" value="${size.name}" id="size-name-${menuId}-${index}" class="input">
+                        <input type="number" value="${size.price}" step="0.01" id="size-price-${menuId}-${index}" class="input input-price">
+                        <button class="btn btn-secondary delete-size-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
+                    </div>
+                `).join("") || "<p class='text-gray-400'>No sizes added</p>"}
+                <div class="variation">
+                    <input type="text" placeholder="Add size" id="new-size-name-${menuId}" class="input">
+                    <input type="number" placeholder="Price" step="0.01" id="new-size-price-${menuId}" class="input input-price">
+                    <button class="btn add-size-btn" data-menu-id="${menuId}">Add</button>
+                </div>
+                <h5 class="text-sm font-semibold mt-3">Extras</h5>
+                ${extras.map((extra, index) => `
+                    <div class="variation" data-extra-index="${index}">
+                        <input type="text" value="${extra.name}" id="extra-name-${menuId}-${index}" class="input">
+                        <input type="number" value="${extra.price}" step="0.01" id="extra-price-${menuId}-${index}" class="input input-price">
+                        <button class="btn btn-secondary delete-extra-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
+                    </div>
+                `).join("") || "<p class='text-gray-400'>No extras added</p>"}
+                <div class="variation">
+                    <input type="text" placeholder="Add extra" id="new-extra-name-${menuId}" class="input">
+                    <input type="number" placeholder="Price" step="0.01" id="new-extra-price-${menuId}" class="input input-price">
+                    <button class="btn add-extra-btn" data-menu-id="${menuId}">Add</button>
+                </div>
+                <button class="btn w-full mt-3 save-menu-btn" data-menu-id="${menuId}">Save Changes</button>
             `;
-            fragment.appendChild(item);
+            editDiv.classList.remove("hidden");
+            document.getElementById(`details-${menuId}`).classList.add("hidden");
+            editDiv.querySelectorAll(".delete-size-btn").forEach(btn => btn.addEventListener("click", () => deleteSize(btn.dataset.menuId, btn.dataset.index)));
+            editDiv.querySelectorAll(".delete-extra-btn").forEach(btn => btn.addEventListener("click", () => deleteExtra(btn.dataset.menuId, btn.dataset.index)));
+            editDiv.querySelector(".add-size-btn").addEventListener("click", () => addSize(menuId));
+            editDiv.querySelector(".add-extra-btn").addEventListener("click", () => addExtra(menuId));
+            editDiv.querySelector(".save-menu-btn").addEventListener("click", () => saveMenuItem(menuId));
+        }
+
+        // Load orders
+        function loadOrders() {
+            if (!restaurantId) return;
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                const orders = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(order => isValidOrder(order) && order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const fragment = document.createDocumentFragment();
+                orders.forEach(order => {
+                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const item = document.createElement("div");
+                    item.className = "order-item";
+                    item.innerHTML = `
+                        <p><strong>Items:</strong> ${items}</p>
+                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                        <p><strong>Order ID:</strong> ${order.id}</p>
+                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                        <p><strong>Note:</strong> ${order.note || "None"}</p>
+                        <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+                    `;
+                    fragment.appendChild(item);
+                });
+                ordersList.innerHTML = "";
+                ordersList.appendChild(fragment);
+                if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
+                ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
+            });
+        }
+
+        // Load delivered orders
+        function loadDeliveredOrders() {
+            if (!restaurantId) return;
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                const orders = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(order => order.status === "delivered" || order.status === "not_delivered")
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const fragment = document.createDocumentFragment();
+                orders.forEach(order => {
+                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const deliveryDetails = order.deliveryDetails || {};
+                    const item = document.createElement("div");
+                    item.className = "order-item";
+                    item.innerHTML = `
+                        <p><strong>Order ID:</strong> ${order.id}</p>
+                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                        <p><strong>Items:</strong> ${items}</p>
+                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                        <p><strong>Note:</strong> ${order.note || "None"}</p>
+                        <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                        <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
+                        <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
+                        <p><strong>Status:</strong> ${order.status}</p>
+                    `;
+                    fragment.appendChild(item);
+                });
+                deliveredList.innerHTML = "";
+                deliveredList.appendChild(fragment);
+                if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
+            });
+        }
+
+        // Order status updates
+        async function markOrderAsBeingDelivered(orderId) {
+            await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
+            showNotification("Order marked as being delivered!");
+        }
+
+        // Store management
+        document.getElementById("store-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("store-name").value;
+            const image = document.getElementById("store-image").value;
+            await setDoc(doc(db, "restaurant", restaurantId), { name, image }, { merge: true });
+            showNotification("Store updated successfully!");
+            loadRestaurantData();
         });
-        deliveredList.innerHTML = "";
-        deliveredList.appendChild(fragment);
-        if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
-    });
-}
 
-// Order status updates
-async function markOrderAsBeingDelivered(orderId) {
-    await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
-    showNotification("Order marked as being delivered!");
-}
+        document.getElementById("delete-store").addEventListener("click", async () => {
+            if (!confirm("Are you sure you want to delete your store? This will remove all associated data and cannot be undone.")) return;
+            const menuRef = collection(db, "restaurant", restaurantId, "menu");
+            const menuSnapshot = await getDocs(menuRef);
+            await Promise.all(menuSnapshot.docs.map(menuDoc => deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuDoc.id))));
+            await deleteDoc(doc(db, "restaurant", restaurantId));
+            showNotification("Store deleted successfully!", "error");
+            document.getElementById("settings").innerHTML = "<p class='text-gray-400'>Store deleted.</p>";
+            loadRestaurantData();
+        });
 
-// Store management
-document.getElementById("store-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("store-name").value;
-    const image = document.getElementById("store-image").value;
-    await setDoc(doc(db, "restaurant", restaurantId), { name, image }, { merge: true });
-    showNotification("Store updated successfully!");
-    loadRestaurantData();
-});
+        document.getElementById("open-shop-btn").addEventListener("click", async () => {
+            await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
+            showNotification("Shop opened!");
+            loadRestaurantData();
+        });
 
-document.getElementById("delete-store").addEventListener("click", async () => {
-    if (!confirm("Are you sure you want to delete your store? This will remove all associated data and cannot be undone.")) return;
-    const menuRef = collection(db, "restaurant", restaurantId, "menu");
-    const menuSnapshot = await getDocs(menuRef);
-    await Promise.all(menuSnapshot.docs.map(menuDoc => deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuDoc.id))));
-    await deleteDoc(doc(db, "restaurant", restaurantId));
-    showNotification("Store deleted successfully!", "error");
-    document.getElementById("settings").innerHTML = "<p class='text-gray-400'>Store deleted.</p>";
-    loadRestaurantData();
-});
+        document.getElementById("close-shop-btn").addEventListener("click", async () => {
+            await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
+            showNotification("Shop closed!");
+            loadRestaurantData();
+        });
 
-document.getElementById("open-shop-btn").addEventListener("click", async () => {
-    await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
-    showNotification("Shop opened!");
-    loadRestaurantData();
-});
-
-document.getElementById("close-shop-btn").addEventListener("click", async () => {
-    await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
-    showNotification("Shop closed!");
-    loadRestaurantData();
-});
-
-// Menu management
-async function deleteMenuItem(menuId) {
-    if (!confirm("Are you sure you want to delete this dish? This action cannot be undone.")) return;
-    await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
-    showNotification("Dish deleted!", "error");
-    loadMenu();
-}
-
-document.getElementById("menu-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("menu-name").value;
-    const price = parseFloat(document.getElementById("menu-price").value);
-    if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
-    await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes: [], extras: [] });
-    showNotification("Dish added!");
-    document.getElementById("menu-name").value = "";
-    document.getElementById("menu-price").value = "";
-    loadMenu();
-});
-
-async function addSize(menuId) {
-    const name = document.getElementById(`new-size-name-${menuId}`).value;
-    const price = parseFloat(document.getElementById(`new-size-price-${menuId}`).value);
-    if (!name || isNaN(price)) return showNotification("Enter size name and price!", "error");
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const sizes = docSnap.data().sizes || [];
-    sizes.push({ name, price });
-    await updateDoc(docRef, { sizes });
-    showNotification("Size added!");
-    showEditMenu(menuId);
-}
-
-async function addExtra(menuId) {
-    const name = document.getElementById(`new-extra-name-${menuId}`).value;
-    const price = parseFloat(document.getElementById(`new-extra-price-${menuId}`).value);
-    if (!name || isNaN(price)) return showNotification("Enter extra name and price!", "error");
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const extras = docSnap.data().extras || [];
-    extras.push({ name, price });
-    await updateDoc(docRef, { extras });
-    showNotification("Extra added!");
-    showEditMenu(menuId);
-}
-
-async function deleteSize(menuId, index) {
-    if (!confirm("Are you sure you want to delete this size?")) return;
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const sizes = docSnap.data().sizes || [];
-    sizes.splice(index, 1);
-    await updateDoc(docRef, { sizes });
-    showNotification("Size deleted!", "error");
-    showEditMenu(menuId);
-}
-
-async function deleteExtra(menuId, index) {
-    if (!confirm("Are you sure you want to delete this extra?")) return;
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const extras = docSnap.data().extras || [];
-    extras.splice(index, 1);
-    await updateDoc(docRef, { extras });
-    showNotification("Extra deleted!", "error");
-    showEditMenu(menuId);
-}
-
-async function saveMenuItem(menuId) {
-    const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-    const docSnap = await getDoc(docRef);
-    const data = docSnap.data();
-    const name = document.getElementById(`name-${menuId}`).value;
-    const price = parseFloat(document.getElementById(`price-${menuId}`).value);
-    const sizes = data.sizes || [];
-    const extras = data.extras || [];
-    const updatedSizes = sizes.map((_, index) => ({
-        name: document.getElementById(`size-name-${menuId}-${index}`).value,
-        price: parseFloat(document.getElementById(`size-price-${menuId}-${index}`).value)
-    }));
-    const updatedExtras = extras.map((_, index) => ({
-        name: document.getElementById(`extra-name-${menuId}-${index}`).value,
-        price: parseFloat(document.getElementById(`extra-price-${menuId}-${index}`).value)
-    }));
-    if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
-    await updateDoc(docRef, { name, price, sizes: updatedSizes, extras: updatedExtras });
-    showNotification("Changes saved!");
-    loadMenu();
-}
-
-// Auth handling
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const mappingRef = doc(db, "vendorMappings", user.email);
-        const mappingSnap = await getDoc(mappingRef);
-        if (mappingSnap.exists()) {
-            restaurantId = mappingSnap.data().restaurantId;
-            loadingScreen.style.display = "none";
-            loginSection.style.display = "none";
-            mainContent.classList.remove("hidden");
-            Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders()]);
-        } else {
-            signOut(auth);
-            loadingScreen.style.display = "none";
-            loginSection.style.display = "flex";
-            mainContent.classList.add("hidden");
-            showNotification("No restaurant assigned to this email!", "error");
+        // Menu management
+        async function deleteMenuItem(menuId) {
+            if (!confirm("Are you sure you want to delete this dish? This action cannot be undone.")) return;
+            await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
+            showNotification("Dish deleted!", "error");
+            loadMenu();
         }
-    } else {
-        loadingScreen.style.display = "none";
-        loginSection.style.display = "flex";
-        mainContent.classList.add("hidden");
-        restaurantId = null;
-    }
-});
 
-document.getElementById("login-btn").addEventListener("click", async () => {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const mappingRef = doc(db, "vendorMappings", userCredential.user.email);
-        const mappingSnap = await getDoc(mappingRef);
-        if (mappingSnap.exists()) {
-            restaurantId = mappingSnap.data().restaurantId;
-            loadingScreen.style.display = "none";
-            loginSection.style.display = "none";
-            mainContent.classList.remove("hidden");
-            Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders()]);
-        } else {
-            signOut(auth);
-            showNotification("No restaurant assigned to this email!", "error");
+        document.getElementById("menu-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("menu-name").value;
+            const price = parseFloat(document.getElementById("menu-price").value);
+            if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
+            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes: [], extras: [] });
+            showNotification("Dish added!");
+            document.getElementById("menu-name").value = "";
+            document.getElementById("menu-price").value = "";
+            loadMenu();
+        });
+
+        async function addSize(menuId) {
+            const name = document.getElementById(`new-size-name-${menuId}`).value;
+            const price = parseFloat(document.getElementById(`new-size-price-${menuId}`).value);
+            if (!name || isNaN(price)) return showNotification("Enter size name and price!", "error");
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const sizes = docSnap.data().sizes || [];
+            sizes.push({ name, price });
+            await updateDoc(docRef, { sizes });
+            showNotification("Size added!");
+            showEditMenu(menuId);
         }
-    } catch (error) {
-        showNotification("Login failed: " + error.message, "error");
-    }
-});
 
-document.getElementById("logout-btn").addEventListener("click", async () => {
-    await signOut(auth);
-    showNotification("Logged out successfully!");
-});
+        async function addExtra(menuId) {
+            const name = document.getElementById(`new-extra-name-${menuId}`).value;
+            const price = parseFloat(document.getElementById(`new-extra-price-${menuId}`).value);
+            if (!name || isNaN(price)) return showNotification("Enter extra name and price!", "error");
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const extras = docSnap.data().extras || [];
+            extras.push({ name, price });
+            await updateDoc(docRef, { extras });
+            showNotification("Extra added!");
+            showEditMenu(menuId);
+        }
 
-// Navigation handlers
-document.getElementById("store-btn").addEventListener("click", () => toggleSection("store"));
-document.getElementById("manage-menu-btn").addEventListener("click", () => { toggleSection("manage-menu"); loadMenu(); });
-document.getElementById("view-orders-btn").addEventListener("click", () => { toggleSection("view-orders"); loadOrders(); });
-document.getElementById("delivered-btn").addEventListener("click", () => { toggleSection("delivered"); loadDeliveredOrders(); });
-document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+        async function deleteSize(menuId, index) {
+            if (!confirm("Are you sure you want to delete this size?")) return;
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const sizes = docSnap.data().sizes || [];
+            sizes.splice(index, 1);
+            await updateDoc(docRef, { sizes });
+            showNotification("Size deleted!", "error");
+            showEditMenu(menuId);
+        }
+
+        async function deleteExtra(menuId, index) {
+            if (!confirm("Are you sure you want to delete this extra?")) return;
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const extras = docSnap.data().extras || [];
+            extras.splice(index, 1);
+            await updateDoc(docRef, { extras });
+            showNotification("Extra deleted!", "error");
+            showEditMenu(menuId);
+        }
+
+        async function saveMenuItem(menuId) {
+            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+            const docSnap = await getDoc(docRef);
+            const data = docSnap.data();
+            const name = document.getElementById(`name-${menuId}`).value;
+            const price = parseFloat(document.getElementById(`price-${menuId}`).value);
+            const sizes = data.sizes || [];
+            const extras = data.extras || [];
+            const updatedSizes = sizes.map((_, index) => ({
+                name: document.getElementById(`size-name-${menuId}-${index}`).value,
+                price: parseFloat(document.getElementById(`size-price-${menuId}-${index}`).value)
+            }));
+            const updatedExtras = extras.map((_, index) => ({
+                name: document.getElementById(`extra-name-${menuId}-${index}`).value,
+                price: parseFloat(document.getElementById(`extra-price-${menuId}-${index}`).value)
+            }));
+            if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
+            await updateDoc(docRef, { name, price, sizes: updatedSizes, extras: updatedExtras });
+            showNotification("Changes saved!");
+            loadMenu();
+        }
+
+        // Auth handling
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const mappingRef = doc(db, "vendorMappings", user.email);
+                const mappingSnap = await getDoc(mappingRef);
+                if (mappingSnap.exists()) {
+                    restaurantId = mappingSnap.data().restaurantId;
+                    loadingScreen.style.display = "none";
+                    loginSection.style.display = "none";
+                    mainContent.classList.remove("hidden");
+                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
+                } else {
+                    signOut(auth);
+                    loadingScreen.style.display = "none";
+                    loginSection.style.display = "flex";
+                    mainContent.classList.add("hidden");
+                    showNotification("No restaurant assigned to this email!", "error");
+                }
+            } else {
+                loadingScreen.style.display = "none";
+                loginSection.style.display = "flex";
+                mainContent.classList.add("hidden");
+                restaurantId = null;
+            }
+        });
+
+        document.getElementById("login-btn").addEventListener("click", async () => {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const mappingRef = doc(db, "vendorMappings", userCredential.user.email);
+                const mappingSnap = await getDoc(mappingRef);
+                if (mappingSnap.exists()) {
+                    restaurantId = mappingSnap.data().restaurantId;
+                    loadingScreen.style.display = "none";
+                    loginSection.style.display = "none";
+                    mainContent.classList.remove("hidden");
+                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
+                } else {
+                    signOut(auth);
+                    showNotification("No restaurant assigned to this email!", "error");
+                }
+            } catch (error) {
+                showNotification("Login failed: " + error.message, "error");
+            }
+        });
+
+        document.getElementById("logout-btn").addEventListener("click", async () => {
+            await signOut(auth);
+            showNotification("Logged out successfully!");
+        });
+
+        // Navigation handlers
+        document.getElementById("store-btn").addEventListener("click", () => { toggleSection("store"); loadDashboard(); });
+        document.getElementById("manage-menu-btn").addEventListener("click", () => { toggleSection("manage-menu"); loadMenu(); });
+        document.getElementById("view-orders-btn").addEventListener("click", () => { toggleSection("view-orders"); loadOrders(); });
+        document.getElementById("delivered-btn").addEventListener("click", () => { toggleSection("delivered"); loadDeliveredOrders(); });
+        document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
     </script>
 
     <script>
@@ -841,5 +939,5 @@ document.getElementById("settings-btn").addEventListener("click", () => toggleSe
             });
         }
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92b3cba86d56b039',t:'MTc0MzgwMTA1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
