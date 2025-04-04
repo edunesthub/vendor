@@ -5,7 +5,7 @@
   "start_url": "https://vendor.chawp.me/index.html",
   "display": "standalone",
   "background_color": "#1c1c1e",
-  "theme_color": "#007aff",
+  "theme_color": "#1c1c1e",
   "icons": [
       {
           "src": "icons/icon-192x192.png",
