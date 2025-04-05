@@ -2,16 +2,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#1c1c1e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-touch-fullscreen" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Chawp Vendor">
+    <meta name="application-name" content="Chawp Vendor">
+    
     <title>Chawp Vendor Portal</title>
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="196x196" href="https://via.placeholder.com/196x196.png?text=Chawp">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/180x180.png?text=Chawp">
+    
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <style>
+        /* Force dark status bar text on iOS */
+        @supports (padding-top: env(safe-area-inset-top)) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+            }
+        }
+        
         body {
             background: #1c1c1e;
             color: #ffffff;
@@ -24,6 +42,28 @@
             user-select: none;
             -webkit-touch-callout: none;
             overflow-x: hidden;
+            -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+            scrollbar-width: none; /* Hide scrollbar for Firefox */
+            -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        body::-webkit-scrollbar, 
+        *::-webkit-scrollbar {
+            display: none;
+            width: 0;
+            height: 0;
+        }
+        
+        /* Remove scrollbars from all elements */
+        * {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Additional override for specific scrollable elements */
+        div, section, nav, main, aside, article, form {
+            scrollbar-width: none;
         }
         .container {
             max-width: 48rem; /* Slimmer, Apple-like max width */
@@ -439,14 +479,7 @@
             --warning-color: #f59e0b;
         }
 
-        /* Hide scrollbar for cleaner look */
-        ::-webkit-scrollbar {
-            display: none;
-        }
-
         body {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
             background: var(--bg-gradient);
         }
 

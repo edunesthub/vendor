@@ -1,15 +1,15 @@
-const CACHE_NAME = "vendor-portal-cache-v2";
+const CACHE_NAME = "vendor-portal-cache-v3";
 const urlsToCache = [
     "/",
-    "vendor-login.html",
-    "vendor-dashboard.html",
-    "vendor-menu.html",
-    "vendor-orders.html",
-    "vendor-settings.html",
+    "/index.html",
+    "index.html",
+    "manifest.json",
     "https://cdn.tailwindcss.com",
     "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js",
     "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js",
     "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js",
+    "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
     "icons/icon-192x192.png",
     "icons/icon-512x512.png"
 ];
@@ -56,29 +56,44 @@ self.addEventListener("activate", event => {
 // Fetch event - Cache-first strategy with network fallback
 self.addEventListener("fetch", event => {
     const request = event.request;
-    const url = new URL(request.url);
-
-    // Handle only GET requests
-    if (request.method !== "GET") {
+    
+    // Skip non-GET requests and requests to other domains
+    if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) {
+        return;
+    }
+    
+    // Special handling for app shell (HTML)
+    if (request.mode === 'navigate') {
+        event.respondWith(
+            fetch(request)
+                .catch(() => {
+                    return caches.match('index.html');
+                })
+        );
         return;
     }
 
+    // Standard cache strategy for other resources
     event.respondWith(
         caches.match(request)
             .then(cachedResponse => {
                 // Return cached response if available
                 if (cachedResponse) {
-                    // Update cache in background
-                    event.waitUntil(updateCache(request));
+                    // Update cache in background for non-static assets
+                    if (!request.url.includes('/icons/')) {
+                        event.waitUntil(updateCache(request));
+                    }
                     return cachedResponse;
                 }
 
                 // Fetch from network if not cached
                 return fetch(request)
                     .then(networkResponse => {
+                        // Clone the response before using it
+                        const responseToCache = networkResponse.clone();
+                        
                         // Cache successful responses
-                        if (networkResponse && networkResponse.status === 200 && networkResponse.type === "basic") {
-                            const responseToCache = networkResponse.clone();
+                        if (networkResponse && networkResponse.status === 200) {
                             caches.open(CACHE_NAME)
                                 .then(cache => cache.put(request, responseToCache))
                                 .catch(err => console.warn("Cache update failed:", err));
@@ -89,7 +104,7 @@ self.addEventListener("fetch", event => {
                         console.warn("Fetch failed:", err);
                         // Offline fallback for navigation requests
                         if (request.mode === "navigate") {
-                            return caches.match("vendor-login.html")
+                            return caches.match("index.html")
                                 .then(fallback => fallback || Promise.reject("No fallback available"));
                         }
                         return Promise.reject("Network and cache unavailable");
@@ -102,7 +117,7 @@ self.addEventListener("fetch", event => {
 function updateCache(request) {
     return fetch(request)
         .then(networkResponse => {
-            if (networkResponse && networkResponse.status === 200 && networkResponse.type === "basic") {
+            if (networkResponse && networkResponse.status === 200) {
                 return caches.open(CACHE_NAME)
                     .then(cache => {
                         cache.put(request, networkResponse.clone());
