@@ -131,77 +131,80 @@
         }
         .notification {
             position: fixed;
-            top: 1.5rem;
+            top: 20px;
             left: 50%;
-            transform: translateX(-50%) translateY(-100%);
-            background: #34c759;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 400px;
+            padding: 15px 20px;
+            border-radius: 12px;
+            background: #1c1c1e;
             color: white;
-            padding: 1.25rem 2.5rem;
-            border-radius: 1rem;
+            font-size: 16px;
+            font-weight: 500;
             text-align: center;
-            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
-            z-index: 9999;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            max-width: 90%;
-            width: auto;
-            min-width: 25rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            z-index: 10000;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            font-size: 1.1rem;
-            font-weight: 500;
-            will-change: transform, opacity;
-            pointer-events: none;
+            justify-content: flex-start;
+            gap: 12px;
+            border-left: 6px solid #34c759;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
         }
+        
         .notification.show {
-            transform: translateX(-50%) translateY(0);
             opacity: 1;
+            visibility: visible;
+            animation: notification-bounce 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
         }
+        
+        @keyframes notification-bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateX(-50%) translateY(0);}
+            40% {transform: translateX(-50%) translateY(-10px);}
+            60% {transform: translateX(-50%) translateY(-5px);}
+        }
+        
+        .notification.success {
+            border-left-color: #34c759;
+            background: #0a3d1c;
+        }
+        
         .notification.error {
-            background: #ff3b30;
+            border-left-color: #ff3b30;
+            background: #3d0a0a;
         }
+        
         .notification.warning {
-            background: #f59e0b;
+            border-left-color: #f59e0b;
+            background: #3d2c0a;
         }
+        
         .notification.info {
-            background: #007aff;
+            border-left-color: #007aff;
+            background: #0a1e3d;
         }
+        
         .notification i {
-            font-size: 1.5rem;
+            font-size: 24px;
         }
+        
         .notification.success i {
-            color: #ffffff;
+            color: #34c759;
         }
+        
         .notification.error i {
-            color: #ffffff;
+            color: #ff3b30;
         }
+        
         .notification.warning i {
-            color: #ffffff;
+            color: #f59e0b;
         }
+        
         .notification.info i {
-            color: #ffffff;
-        }
-        @keyframes slideIn {
-            from {
-                transform: translateX(-50%) translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-        }
-        @keyframes slideOut {
-            from {
-                transform: translateX(-50%) translateY(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(-50%) translateY(-100%);
-                opacity: 0;
-            }
+            color: #007aff;
         }
         .grid {
             display: grid;
@@ -616,39 +619,6 @@
                 font-size: 16px; /* Prevent zoom on iOS */
             }
         }
-
-        /* Enhanced notification styles */
-        .notification {
-            position: fixed;
-            top: 1.5rem;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100%);
-            padding: 1rem 2rem;
-            border-radius: 1rem;
-            background: var(--success-color);
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3);
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            opacity: 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .notification.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
-
-        .notification.error {
-            background: var(--error-color);
-        }
-
-        .notification.warning {
-            background: var(--warning-color);
-        }
     </style>
 </head>
 <body>
@@ -659,6 +629,7 @@
 
     <!-- Login section (hidden by default) -->
     <div id="login-section" class="section" style="display: none;">
+        <div id="login-notification" class="notification"></div>
         <div class="login-container">
             <h1 class="login-title">Welcome Back</h1>
             <p class="login-subtitle">Sign in to manage your restaurant</p>
@@ -813,27 +784,55 @@
         const deliveredList = document.getElementById("delivered-list");
         const dashboardGrid = document.getElementById("dashboard-grid");
 
-        // Enhanced notification function
+        // Enhanced notification function with improved UX
         function showNotification(message, type = "success") {
             const notification = document.getElementById("notification");
-            const icon = type === "error" ? "fa-exclamation-circle" : 
-                        type === "warning" ? "fa-exclamation-triangle" : 
-                        type === "info" ? "fa-info-circle" : "fa-check-circle";
             
-            notification.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
-            notification.className = `notification ${type} show`;
+            // Clear any existing notification timers
+            if (window.notificationTimer) {
+                clearTimeout(window.notificationTimer);
+            }
+            
+            // Determine icon based on notification type
+            const icon = type === "error" ? "fa-circle-exclamation" : 
+                        type === "warning" ? "fa-triangle-exclamation" : 
+                        type === "info" ? "fa-circle-info" : "fa-circle-check";
+            
+            // Set notification content and styling
+            notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+            notification.className = `notification ${type}`; // Remove show class first
+            
+            // Force a reflow to restart animation
+            void notification.offsetWidth;
+            
+            // Add show class to trigger animation
+            notification.classList.add("show");
             
             // Play a sound for errors and warnings
             if (type === "error" || type === "warning") {
-                const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-                audio.play().catch(() => {}); // Ignore errors if audio fails
+                try {
+                    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+                    audio.play().catch(() => {});
+                } catch (e) {} // Ignore errors if audio fails
             }
             
-            // Auto-hide after 3 seconds
-            setTimeout(() => {
+            // Vibrate on mobile devices for error notifications
+            if (type === "error" && navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+            
+            // Auto-hide after 4 seconds
+            window.notificationTimer = setTimeout(() => {
                 notification.classList.remove("show");
-            }, 3000);
+            }, 4000);
         }
+
+        // Test notification on load to fix visibility issues
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                showNotification("Welcome to Chawp Vendor Portal", "info");
+            }, 2000);
+        });
 
         // Efficient section toggling
         function toggleSection(sectionId) {
@@ -1257,13 +1256,20 @@
                     loadingScreen.style.display = "none";
                     loginSection.style.display = "flex";
                     mainContent.classList.add("hidden");
-                    showNotification("No restaurant assigned to this email!", "error");
+                    showLoginNotification("No restaurant assigned to this email!", "error");
                 }
             } else {
                 loadingScreen.style.display = "none";
                 loginSection.style.display = "flex";
                 mainContent.classList.add("hidden");
                 restaurantId = null;
+                
+                // Show a test notification on login screen load
+                setTimeout(() => {
+                    if (document.getElementById("login-notification")) {
+                        showLoginNotification("Please enter your login details", "info");
+                    }
+                }, 1000);
             }
         });
 
@@ -1289,6 +1295,49 @@
             const passwordInput = document.getElementById('password');
             const loginBtn = document.getElementById('login-btn');
             const spinner = document.getElementById('login-spinner');
+            
+            // Show login-specific notifications
+            function showLoginNotification(message, type = "error") {
+                const notification = document.getElementById("login-notification");
+                
+                // Clear any existing notification timers
+                if (window.loginNotificationTimer) {
+                    clearTimeout(window.loginNotificationTimer);
+                }
+                
+                // Determine icon based on notification type
+                const icon = type === "error" ? "fa-circle-exclamation" : 
+                            type === "warning" ? "fa-triangle-exclamation" : 
+                            type === "info" ? "fa-circle-info" : "fa-circle-check";
+                
+                // Set notification content and styling
+                notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+                notification.className = `notification ${type}`; // Remove show class first
+                
+                // Force a reflow to restart animation
+                void notification.offsetWidth;
+                
+                // Add show class to trigger animation
+                notification.classList.add("show");
+                
+                // Play a sound for errors and warnings
+                if (type === "error" || type === "warning") {
+                    try {
+                        const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+                        audio.play().catch(() => {});
+                    } catch (e) {} // Ignore errors if audio fails
+                }
+                
+                // Vibrate on mobile devices for error notifications
+                if (type === "error" && navigator.vibrate) {
+                    navigator.vibrate(200);
+                }
+                
+                // Auto-hide after 4 seconds
+                window.loginNotificationTimer = setTimeout(() => {
+                    notification.classList.remove("show");
+                }, 4000);
+            }
             
             // Auto-focus email field
             emailInput.focus();
@@ -1362,18 +1411,22 @@
                 // Email validation
                 if (!emailInput.value.trim()) {
                     showError(emailInput, 'email-error', 'Please enter your email address');
+                    showLoginNotification("Email address is required", "error");
                     isValid = false;
                 } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
                     showError(emailInput, 'email-error', 'Please enter a valid email address');
+                    showLoginNotification("Invalid email format", "error");
                     isValid = false;
                 }
 
                 // Password validation
                 if (!passwordInput.value) {
                     showError(passwordInput, 'password-error', 'Please enter your password');
+                    showLoginNotification("Password is required", "error");
                     isValid = false;
                 } else if (passwordInput.value.length < 6) {
                     showError(passwordInput, 'password-error', 'Password must be at least 6 characters');
+                    showLoginNotification("Password must be at least 6 characters", "warning");
                     isValid = false;
                 }
 
@@ -1382,7 +1435,7 @@
 
             // Error handling function
             function handleLoginError(error) {
-                let errorMessage = "Login failed. Please try again.";
+                let errorMessage = "Wrong email or password. Please try again.";
                 let errorType = "error";
 
                 switch (error.code) {
@@ -1405,7 +1458,7 @@
                         break;
                 }
 
-                showNotification(errorMessage, errorType);
+                showLoginNotification(errorMessage, errorType);
             }
 
             // Helper functions
