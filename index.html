@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <meta name="theme-color" content="#1c1c1e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Chawp Vendor Portal</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -130,23 +133,75 @@
             position: fixed;
             top: 1.5rem;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(-100%);
             background: #34c759;
-            padding: 0.75rem 2rem;
-            border-radius: 0.875rem;
+            color: white;
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
             text-align: center;
-            box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.4);
-            z-index: 1000;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.5);
+            z-index: 9999;
             opacity: 0;
-            transition: opacity 0.2s ease-out;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             max-width: 90%;
-            will-change: opacity;
+            width: auto;
+            min-width: 25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            will-change: transform, opacity;
+            pointer-events: none;
         }
         .notification.show {
+            transform: translateX(-50%) translateY(0);
             opacity: 1;
         }
         .notification.error {
             background: #ff3b30;
+        }
+        .notification.warning {
+            background: #f59e0b;
+        }
+        .notification.info {
+            background: #007aff;
+        }
+        .notification i {
+            font-size: 1.5rem;
+        }
+        .notification.success i {
+            color: #ffffff;
+        }
+        .notification.error i {
+            color: #ffffff;
+        }
+        .notification.warning i {
+            color: #ffffff;
+        }
+        .notification.info i {
+            color: #ffffff;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes slideOut {
+            from {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-50%) translateY(-100%);
+                opacity: 0;
+            }
         }
         .grid {
             display: grid;
@@ -199,7 +254,7 @@
         }
         .menu-details {
             background: #343436;
-            padding: 1rem;
+            padding:1rem;
             border-radius: 0.75rem;
             margin-top: 1rem;
             text-align: left;
@@ -336,6 +391,264 @@
             color: #34c759;
             margin: 0;
         }
+        /* Add these new styles for the login enhancements */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #a1a1a6;
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+        .spinner {
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid #ffffff;
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin-right: 0.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .btn-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        /* Enhanced login styles */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #007aff, #34c759);
+            --bg-gradient: linear-gradient(135deg, #1c1c1e 0%, #252527 100%);
+            --input-bg: rgba(255, 255, 255, 0.1);
+            --error-color: #ff3b30;
+            --success-color: #34c759;
+            --warning-color: #f59e0b;
+        }
+
+        /* Hide scrollbar for cleaner look */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            background: var(--bg-gradient);
+        }
+
+        .login-container {
+            max-width: 24rem;
+            width: 90%;
+            margin: 2rem auto;
+            padding: 2.5rem;
+            background: rgba(37, 37, 39, 0.95);
+            border-radius: 1.5rem;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .login-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: -1px;
+        }
+
+        .login-subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 2.5rem;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            background: var(--input-bg);
+            border: 2px solid transparent;
+            border-radius: 1rem;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #007aff;
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: #fff;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 1rem;
+            color: #fff;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 122, 255, 0.4);
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+        }
+
+        .signup-link a {
+            color: #007aff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        .signup-link a:hover {
+            color: #34c759;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .login-container {
+                padding: 2rem;
+                margin: 1rem auto;
+            }
+
+            .login-title {
+                font-size: 2rem;
+            }
+
+            .form-input {
+                font-size: 16px; /* Prevent zoom on iOS */
+            }
+        }
+
+        /* Enhanced notification styles */
+        .notification {
+            position: fixed;
+            top: 1.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100%);
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            background: var(--success-color);
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .notification.error {
+            background: var(--error-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+        }
     </style>
 </head>
 <body>
@@ -346,10 +659,58 @@
 
     <!-- Login section (hidden by default) -->
     <div id="login-section" class="section" style="display: none;">
-        <h1 class="text-4xl font-semibold mb-6">Vendor Portal</h1>
-        <input type="email" id="email" placeholder="Email" class="input">
-        <input type="password" id="password" placeholder="Password" class="input">
-        <button id="login-btn" class="btn">Login</button>
+        <div class="login-container">
+            <h1 class="login-title">Welcome Back</h1>
+            <p class="login-subtitle">Sign in to manage your restaurant</p>
+            
+            <form id="login-form" novalidate>
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address</label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        class="form-input" 
+                        placeholder="Enter your email"
+                        autocomplete="email"
+                        required
+                        aria-required="true"
+                        aria-describedby="email-error"
+                    >
+                    <div id="email-error" class="error-message" role="alert"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <div class="password-container">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-input" 
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            minlength="6"
+                            required
+                            aria-required="true"
+                            aria-describedby="password-error"
+                        >
+                        <button type="button" class="password-toggle" id="toggle-password" aria-label="Toggle password visibility">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div id="password-error" class="error-message" role="alert"></div>
+                </div>
+
+                <button type="submit" id="login-btn" class="login-btn">
+                    <div class="spinner" id="login-spinner"></div>
+                    <i class="fas fa-sign-in-alt"></i>
+                    <span>Sign In</span>
+                </button>
+            </form>
+
+            <div class="signup-link">
+                Don't have an account? <a href="https://wa.me/233593117766" id="signup-link">Contact support</a>
+            </div>
+        </div>
     </div>
 
     <div id="main-content" class="container hidden">
@@ -359,7 +720,7 @@
         <div id="notification" class="notification"></div>
 
         <div id="store" class="section">
-            <p class="text-center mb-6">Control your shop’s status below.</p>
+            <p class="text-center mb-6">Control your shop's status below.</p>
             <div class="flex gap-4 justify-center flex-wrap">
                 <button id="open-shop-btn" class="btn btn-edit">Open Shop</button>
                 <button id="close-shop-btn" class="btn btn-secondary">Close Shop</button>
@@ -367,7 +728,7 @@
             <p id="shop-status" class="text-center mt-6">Shop Status: <span id="status-text">Closed</span></p>
         
         <br><hr><br>
-            <h2 class="text-2xl font-semibold mb-4">Today’s Dashboard</h2>
+            <h2 class="text-2xl font-semibold mb-4">Today's Dashboard</h2>
             <div class="dashboard-grid" id="dashboard-grid"></div>
             </div>
 
@@ -452,11 +813,26 @@
         const deliveredList = document.getElementById("delivered-list");
         const dashboardGrid = document.getElementById("dashboard-grid");
 
-        // Fast notification function
+        // Enhanced notification function
         function showNotification(message, type = "success") {
-            notification.textContent = message;
-            notification.className = `notification ${type === "error" ? "error" : ""} show`;
-            setTimeout(() => notification.classList.remove("show"), 3000);
+            const notification = document.getElementById("notification");
+            const icon = type === "error" ? "fa-exclamation-circle" : 
+                        type === "warning" ? "fa-exclamation-triangle" : 
+                        type === "info" ? "fa-info-circle" : "fa-check-circle";
+            
+            notification.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            notification.className = `notification ${type} show`;
+            
+            // Play a sound for errors and warnings
+            if (type === "error" || type === "warning") {
+                const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+                audio.play().catch(() => {}); // Ignore errors if audio fails
+            }
+            
+            // Auto-hide after 3 seconds
+            setTimeout(() => {
+                notification.classList.remove("show");
+            }, 3000);
         }
 
         // Efficient section toggling
@@ -891,39 +1267,216 @@
             }
         });
 
-        document.getElementById("login-btn").addEventListener("click", async () => {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
-            try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const mappingRef = doc(db, "vendorMappings", userCredential.user.email);
-                const mappingSnap = await getDoc(mappingRef);
-                if (mappingSnap.exists()) {
-                    restaurantId = mappingSnap.data().restaurantId;
-                    loadingScreen.style.display = "none";
-                    loginSection.style.display = "none";
-                    mainContent.classList.remove("hidden");
-                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
-                } else {
-                    signOut(auth);
-                    showNotification("No restaurant assigned to this email!", "error");
-                }
-            } catch (error) {
-                showNotification("Login failed: " + error.message, "error");
+        // Password toggle functionality
+        document.getElementById("toggle-password").addEventListener("click", function() {
+            const passwordInput = document.getElementById("password");
+            const icon = this.querySelector("i");
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                passwordInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
             }
         });
 
-        document.getElementById("logout-btn").addEventListener("click", async () => {
-            await signOut(auth);
-            showNotification("Logged out successfully!");
+        // Enhanced login handling with immediate feedback and spinner
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('login-form');
+            const emailInput = document.getElementById('email');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('login-btn');
+            const spinner = document.getElementById('login-spinner');
+            
+            // Auto-focus email field
+            emailInput.focus();
+
+            // Password visibility toggle
+            document.getElementById('toggle-password').addEventListener('click', function() {
+                const type = passwordInput.type === 'password' ? 'text' : 'password';
+                passwordInput.type = type;
+                this.querySelector('i').classList.toggle('fa-eye');
+                this.querySelector('i').classList.toggle('fa-eye-slash');
+            });
+
+            // Form validation and submission
+            loginForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Reset error states
+                resetErrors();
+
+                // Validate inputs
+                if (!validateForm()) return;
+
+                // Show loading state
+                setLoading(true);
+
+                try {
+                    const userCredential = await signInWithEmailAndPassword(
+                        auth,
+                        emailInput.value.trim(),
+                        passwordInput.value
+                    );
+
+                    const mappingRef = doc(db, "vendorMappings", userCredential.user.email);
+                    const mappingSnap = await getDoc(mappingRef);
+
+                    if (mappingSnap.exists()) {
+                        // Login successful
+                        restaurantId = mappingSnap.data().restaurantId;
+                        showNotification("Login successful! Welcome back.", "success");
+                        
+                        // Save auth state
+                        localStorage.setItem('isLoggedIn', 'true');
+                        
+                        // Show main content
+                        loadingScreen.style.display = "none";
+                        loginSection.style.display = "none";
+                        mainContent.classList.remove("hidden");
+                        
+                        // Load data
+                        await Promise.all([
+                            loadRestaurantData(),
+                            loadMenu(),
+                            loadOrders(),
+                            loadDeliveredOrders(),
+                            loadDashboard()
+                        ]);
+                    } else {
+                        throw new Error("No restaurant assigned to this email");
+                    }
+                } catch (error) {
+                    handleLoginError(error);
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            // Form validation function
+            function validateForm() {
+                let isValid = true;
+
+                // Email validation
+                if (!emailInput.value.trim()) {
+                    showError(emailInput, 'email-error', 'Please enter your email address');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
+                    showError(emailInput, 'email-error', 'Please enter a valid email address');
+                    isValid = false;
+                }
+
+                // Password validation
+                if (!passwordInput.value) {
+                    showError(passwordInput, 'password-error', 'Please enter your password');
+                    isValid = false;
+                } else if (passwordInput.value.length < 6) {
+                    showError(passwordInput, 'password-error', 'Password must be at least 6 characters');
+                    isValid = false;
+                }
+
+                return isValid;
+            }
+
+            // Error handling function
+            function handleLoginError(error) {
+                let errorMessage = "Login failed. Please try again.";
+                let errorType = "error";
+
+                switch (error.code) {
+                    case 'auth/user-not-found':
+                        errorMessage = "No account found with this email";
+                        showError(emailInput, 'email-error', errorMessage);
+                        break;
+                    case 'auth/wrong-password':
+                        errorMessage = "Incorrect password";
+                        showError(passwordInput, 'password-error', errorMessage);
+                        passwordInput.value = ''; // Clear password
+                        passwordInput.focus(); // Focus password field
+                        break;
+                    case 'auth/too-many-requests':
+                        errorMessage = "Too many failed attempts. Please try again later";
+                        errorType = "warning";
+                        break;
+                    case 'auth/network-request-failed':
+                        errorMessage = "Network error. Please check your connection";
+                        break;
+                }
+
+                showNotification(errorMessage, errorType);
+            }
+
+            // Helper functions
+            function showError(input, errorId, message) {
+                input.classList.add('error');
+                const errorElement = document.getElementById(errorId);
+                errorElement.textContent = message;
+                errorElement.classList.add('show');
+            }
+
+            function resetErrors() {
+                emailInput.classList.remove('error');
+                passwordInput.classList.remove('error');
+                document.getElementById('email-error').classList.remove('show');
+                document.getElementById('password-error').classList.remove('show');
+            }
+
+            function setLoading(isLoading) {
+                loginBtn.disabled = isLoading;
+                spinner.style.display = isLoading ? 'block' : 'none';
+                loginBtn.querySelector('span').textContent = isLoading ? 'Signing in...' : 'Sign In';
+            }
         });
 
-        // Navigation handlers
-        document.getElementById("store-btn").addEventListener("click", () => { toggleSection("store"); loadDashboard(); });
-        document.getElementById("manage-menu-btn").addEventListener("click", () => { toggleSection("manage-menu"); loadMenu(); });
-        document.getElementById("view-orders-btn").addEventListener("click", () => { toggleSection("view-orders"); loadOrders(); });
-        document.getElementById("delivered-btn").addEventListener("click", () => { toggleSection("delivered"); loadDeliveredOrders(); });
-        document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+        // Check for existing session
+        const checkSession = () => {
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+            if (isLoggedIn) {
+                loadingScreen.style.display = "none";
+                loginSection.style.display = "none";
+                mainContent.classList.remove("hidden");
+            }
+        };
+
+        // Initialize
+        checkSession();
+
+        // Add back the navigation handlers
+        document.addEventListener('DOMContentLoaded', function() {
+            // ... existing login form code ...
+
+            // Navigation handlers
+            document.getElementById("store-btn").addEventListener("click", () => { 
+                toggleSection("store"); 
+                loadDashboard(); 
+            });
+            
+            document.getElementById("manage-menu-btn").addEventListener("click", () => { 
+                toggleSection("manage-menu"); 
+                loadMenu(); 
+            });
+            
+            document.getElementById("view-orders-btn").addEventListener("click", () => { 
+                toggleSection("view-orders"); 
+                loadOrders(); 
+            });
+            
+            document.getElementById("delivered-btn").addEventListener("click", () => { 
+                toggleSection("delivered"); 
+                loadDeliveredOrders(); 
+            });
+            
+            document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+
+            // Logout handler
+            document.getElementById("logout-btn").addEventListener("click", async () => {
+                await signOut(auth);
+                localStorage.removeItem('isLoggedIn');
+                showNotification("Logged out successfully!", "success");
+            });
+        });
     </script>
 
     <script>
@@ -939,5 +1492,5 @@
             });
         }
     </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92b3cba86d56b039',t:'MTc0MzgwMTA1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92b3cba86d56b039',t:'MTc0MzgwMTA1OC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92ba5f596841dd1e',t:'MTc0Mzg3MDAyMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
