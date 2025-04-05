@@ -1,4 +1,4 @@
-const CACHE_NAME = "vendor-portal-cache-v3";
+const CACHE_NAME = "vendor-portal-cache-v4"; // Updated cache version
 const urlsToCache = [
     "/",
     "/index.html",
@@ -126,3 +126,16 @@ function updateCache(request) {
         })
         .catch(err => console.warn("Background update failed:", err));
 }
+
+// OneSignal integration (if needed)
+self.addEventListener('push', function(event) {
+    const options = {
+        body: event.data.text(),
+        icon: 'icons/icon-192x192.png',
+        badge: 'icons/icon-512x512.png'
+    };
+
+    event.waitUntil(
+        self.registration.showNotification('New Notification', options)
+    );
+});
