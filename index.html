@@ -619,6 +619,26 @@
                 font-size: 16px; /* Prevent zoom on iOS */
             }
         }
+
+        /* Login notification specific styles */
+        #login-notification {
+            position: relative !important;
+            transform: none !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin-bottom: 1.5rem;
+            box-sizing: border-box;
+        }
+        
+        #login-notification.show {
+            animation: notification-fade 0.3s ease-in-out;
+        }
+        
+        @keyframes notification-fade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -629,10 +649,11 @@
 
     <!-- Login section (hidden by default) -->
     <div id="login-section" class="section" style="display: none;">
-        <div id="login-notification" class="notification"></div>
         <div class="login-container">
             <h1 class="login-title">Welcome Back</h1>
             <p class="login-subtitle">Sign in to manage your restaurant</p>
+            
+            <div id="login-notification" class="notification" style="position: relative; transform: none; left: 0; top: 0; width: 100%; margin-bottom: 1.5rem;"></div>
             
             <form id="login-form" novalidate>
                 <div class="form-group">
@@ -1273,6 +1294,111 @@
             }
         });
 
+        // Handle login submission
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get login button for event handlers
+            const loginButton = document.getElementById('login-btn');
+            const spinner = document.getElementById('login-spinner');
+            
+            // Handle the actual authentication with Firebase
+            document.getElementById('login-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const emailInput = document.getElementById('email');
+                const passwordInput = document.getElementById('password');
+                const email = emailInput.value.trim();
+                const password = passwordInput.value;
+                
+                // Clear previous errors
+                emailInput.classList.remove('error');
+                passwordInput.classList.remove('error');
+                document.getElementById('email-error').classList.remove('show');
+                document.getElementById('password-error').classList.remove('show');
+                
+                // Validate form first
+                let isValid = true;
+                
+                // Email validation
+                if (!email) {
+                    showLoginNotification("Email address is required", "error");
+                    emailInput.classList.add('error');
+                    document.getElementById('email-error').textContent = 'Please enter your email address';
+                    document.getElementById('email-error').classList.add('show');
+                    isValid = false;
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                    showLoginNotification("Invalid email format", "error");
+                    emailInput.classList.add('error');
+                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                    document.getElementById('email-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                // Password validation
+                if (!password) {
+                    showLoginNotification("Password is required", "error");
+                    passwordInput.classList.add('error');
+                    document.getElementById('password-error').textContent = 'Please enter your password';
+                    document.getElementById('password-error').classList.add('show');
+                    isValid = false;
+                } else if (password.length < 6) {
+                    showLoginNotification("Password must be at least 6 characters", "warning");
+                    passwordInput.classList.add('error');
+                    document.getElementById('password-error').textContent = 'Password must be at least 6 characters';
+                    document.getElementById('password-error').classList.add('show');
+                    isValid = false;
+                }
+                
+                // Skip authentication if validation fails
+                if (!isValid) {
+                    return;
+                }
+                
+                // Show loading state
+                loginButton.disabled = true;
+                spinner.style.display = 'block';
+                loginButton.querySelector('span').textContent = 'Signing in...';
+                showLoginNotification("Logging in...", "info");
+                
+                try {
+                    await signInWithEmailAndPassword(auth, email, password);
+                    // Auth state change listener will handle successful login
+                } catch (error) {
+                    // Handle specific errors
+                    let errorMessage = "Wrong email or password. Please try again.";
+                    
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            errorMessage = "No account found with this email address.";
+                            emailInput.classList.add('error');
+                            document.getElementById('email-error').textContent = errorMessage;
+                            document.getElementById('email-error').classList.add('show');
+                            break;
+                        case 'auth/wrong-password':
+                            errorMessage = "Incorrect password. Please try again.";
+                            passwordInput.classList.add('error');
+                            document.getElementById('password-error').textContent = errorMessage;
+                            document.getElementById('password-error').classList.add('show');
+                            passwordInput.value = ''; // Clear password
+                            passwordInput.focus(); // Focus password field
+                            break;
+                        case 'auth/too-many-requests':
+                            errorMessage = "Too many failed attempts. Please try again later.";
+                            break;
+                        case 'auth/network-request-failed':
+                            errorMessage = "Network error. Please check your connection.";
+                            break;
+                    }
+                    
+                    showLoginNotification(errorMessage, "error");
+                    
+                    // Reset button state
+                    loginButton.disabled = false;
+                    spinner.style.display = 'none';
+                    loginButton.querySelector('span').textContent = 'Sign In';
+                }
+            });
+        });
+
         // Password toggle functionality
         document.getElementById("toggle-password").addEventListener("click", function() {
             const passwordInput = document.getElementById("password");
@@ -1288,200 +1414,53 @@
             }
         });
 
-        // Enhanced login handling with immediate feedback and spinner
-        document.addEventListener('DOMContentLoaded', function() {
-            const loginForm = document.getElementById('login-form');
-            const emailInput = document.getElementById('email');
-            const passwordInput = document.getElementById('password');
-            const loginBtn = document.getElementById('login-btn');
-            const spinner = document.getElementById('login-spinner');
+        // Login-specific notification function
+        function showLoginNotification(message, type = "error") {
+            const notification = document.getElementById("login-notification");
+            if (!notification) return; // Safety check
             
-            // Show login-specific notifications
-            function showLoginNotification(message, type = "error") {
-                const notification = document.getElementById("login-notification");
-                
-                // Clear any existing notification timers
-                if (window.loginNotificationTimer) {
-                    clearTimeout(window.loginNotificationTimer);
-                }
-                
-                // Determine icon based on notification type
-                const icon = type === "error" ? "fa-circle-exclamation" : 
-                            type === "warning" ? "fa-triangle-exclamation" : 
-                            type === "info" ? "fa-circle-info" : "fa-circle-check";
-                
-                // Set notification content and styling
-                notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
-                notification.className = `notification ${type}`; // Remove show class first
-                
-                // Force a reflow to restart animation
-                void notification.offsetWidth;
-                
-                // Add show class to trigger animation
-                notification.classList.add("show");
-                
-                // Play a sound for errors and warnings
-                if (type === "error" || type === "warning") {
-                    try {
-                        const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-                        audio.play().catch(() => {});
-                    } catch (e) {} // Ignore errors if audio fails
-                }
-                
-                // Vibrate on mobile devices for error notifications
-                if (type === "error" && navigator.vibrate) {
-                    navigator.vibrate(200);
-                }
-                
-                // Auto-hide after 4 seconds
-                window.loginNotificationTimer = setTimeout(() => {
-                    notification.classList.remove("show");
-                }, 4000);
+            // Clear any existing notification timers
+            if (window.loginNotificationTimer) {
+                clearTimeout(window.loginNotificationTimer);
             }
             
-            // Auto-focus email field
-            emailInput.focus();
-
-            // Password visibility toggle
-            document.getElementById('toggle-password').addEventListener('click', function() {
-                const type = passwordInput.type === 'password' ? 'text' : 'password';
-                passwordInput.type = type;
-                this.querySelector('i').classList.toggle('fa-eye');
-                this.querySelector('i').classList.toggle('fa-eye-slash');
-            });
-
-            // Form validation and submission
-            loginForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                // Reset error states
-                resetErrors();
-
-                // Validate inputs
-                if (!validateForm()) return;
-
-                // Show loading state
-                setLoading(true);
-
+            // Determine icon based on notification type
+            const icon = type === "error" ? "fa-circle-exclamation" : 
+                        type === "warning" ? "fa-triangle-exclamation" : 
+                        type === "info" ? "fa-circle-info" : "fa-circle-check";
+            
+            // Set notification content and styling
+            notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+            notification.className = `notification ${type}`; // Remove show class first
+            
+            // Force a reflow to restart animation
+            void notification.offsetWidth;
+            
+            // Add show class to trigger animation
+            notification.classList.add("show");
+            
+            // Play a sound for errors and warnings
+            if (type === "error" || type === "warning") {
                 try {
-                    const userCredential = await signInWithEmailAndPassword(
-                        auth,
-                        emailInput.value.trim(),
-                        passwordInput.value
-                    );
-
-                    const mappingRef = doc(db, "vendorMappings", userCredential.user.email);
-                    const mappingSnap = await getDoc(mappingRef);
-
-                    if (mappingSnap.exists()) {
-                        // Login successful
-                        restaurantId = mappingSnap.data().restaurantId;
-                        showNotification("Login successful! Welcome back.", "success");
-                        
-                        // Save auth state
-                        localStorage.setItem('isLoggedIn', 'true');
-                        
-                        // Show main content
-                        loadingScreen.style.display = "none";
-                        loginSection.style.display = "none";
-                        mainContent.classList.remove("hidden");
-                        
-                        // Load data
-                        await Promise.all([
-                            loadRestaurantData(),
-                            loadMenu(),
-                            loadOrders(),
-                            loadDeliveredOrders(),
-                            loadDashboard()
-                        ]);
-                    } else {
-                        throw new Error("No restaurant assigned to this email");
-                    }
-                } catch (error) {
-                    handleLoginError(error);
-                } finally {
-                    setLoading(false);
-                }
-            });
-
-            // Form validation function
-            function validateForm() {
-                let isValid = true;
-
-                // Email validation
-                if (!emailInput.value.trim()) {
-                    showError(emailInput, 'email-error', 'Please enter your email address');
-                    showLoginNotification("Email address is required", "error");
-                    isValid = false;
-                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim())) {
-                    showError(emailInput, 'email-error', 'Please enter a valid email address');
-                    showLoginNotification("Invalid email format", "error");
-                    isValid = false;
-                }
-
-                // Password validation
-                if (!passwordInput.value) {
-                    showError(passwordInput, 'password-error', 'Please enter your password');
-                    showLoginNotification("Password is required", "error");
-                    isValid = false;
-                } else if (passwordInput.value.length < 6) {
-                    showError(passwordInput, 'password-error', 'Password must be at least 6 characters');
-                    showLoginNotification("Password must be at least 6 characters", "warning");
-                    isValid = false;
-                }
-
-                return isValid;
+                    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+                    audio.play().catch(() => {});
+                } catch (e) {} // Ignore errors if audio fails
             }
-
-            // Error handling function
-            function handleLoginError(error) {
-                let errorMessage = "Wrong email or password. Please try again.";
-                let errorType = "error";
-
-                switch (error.code) {
-                    case 'auth/user-not-found':
-                        errorMessage = "No account found with this email";
-                        showError(emailInput, 'email-error', errorMessage);
-                        break;
-                    case 'auth/wrong-password':
-                        errorMessage = "Incorrect password";
-                        showError(passwordInput, 'password-error', errorMessage);
-                        passwordInput.value = ''; // Clear password
-                        passwordInput.focus(); // Focus password field
-                        break;
-                    case 'auth/too-many-requests':
-                        errorMessage = "Too many failed attempts. Please try again later";
-                        errorType = "warning";
-                        break;
-                    case 'auth/network-request-failed':
-                        errorMessage = "Network error. Please check your connection";
-                        break;
-                }
-
-                showLoginNotification(errorMessage, errorType);
+            
+            // Vibrate on mobile devices for error notifications
+            if (type === "error" && navigator.vibrate) {
+                navigator.vibrate(200);
             }
-
-            // Helper functions
-            function showError(input, errorId, message) {
-                input.classList.add('error');
-                const errorElement = document.getElementById(errorId);
-                errorElement.textContent = message;
-                errorElement.classList.add('show');
-            }
-
-            function resetErrors() {
-                emailInput.classList.remove('error');
-                passwordInput.classList.remove('error');
-                document.getElementById('email-error').classList.remove('show');
-                document.getElementById('password-error').classList.remove('show');
-            }
-
-            function setLoading(isLoading) {
-                loginBtn.disabled = isLoading;
-                spinner.style.display = isLoading ? 'block' : 'none';
-                loginBtn.querySelector('span').textContent = isLoading ? 'Signing in...' : 'Sign In';
-            }
-        });
+            
+            // Make notification element visible immediately and keep it visible longer
+            notification.style.opacity = "1";
+            notification.style.visibility = "visible";
+            
+            // Auto-hide after 5 seconds (longer for login notifications)
+            window.loginNotificationTimer = setTimeout(() => {
+                notification.classList.remove("show");
+            }, 5000);
+        }
 
         // Check for existing session
         const checkSession = () => {
@@ -1496,10 +1475,47 @@
         // Initialize
         checkSession();
 
+        // Add form validation to show notifications
+        document.addEventListener('DOMContentLoaded', function() {
+            // Email validation with notification
+            document.getElementById('email').addEventListener('blur', function() {
+                if (!this.value.trim()) {
+                    showLoginNotification("Email address is required", "error");
+                    this.classList.add('error');
+                    document.getElementById('email-error').textContent = 'Please enter your email address';
+                    document.getElementById('email-error').classList.add('show');
+                } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value.trim())) {
+                    showLoginNotification("Invalid email format", "error");
+                    this.classList.add('error');
+                    document.getElementById('email-error').textContent = 'Please enter a valid email address';
+                    document.getElementById('email-error').classList.add('show');
+                } else {
+                    this.classList.remove('error');
+                    document.getElementById('email-error').classList.remove('show');
+                }
+            });
+
+            // Password validation with notification
+            document.getElementById('password').addEventListener('blur', function() {
+                if (!this.value) {
+                    showLoginNotification("Password is required", "error");
+                    this.classList.add('error');
+                    document.getElementById('password-error').textContent = 'Please enter your password';
+                    document.getElementById('password-error').classList.add('show');
+                } else if (this.value.length < 6) {
+                    showLoginNotification("Password must be at least 6 characters", "warning");
+                    this.classList.add('error');
+                    document.getElementById('password-error').textContent = 'Password must be at least 6 characters';
+                    document.getElementById('password-error').classList.add('show');
+                } else {
+                    this.classList.remove('error');
+                    document.getElementById('password-error').classList.remove('show');
+                }
+            });
+        });
+
         // Add back the navigation handlers
         document.addEventListener('DOMContentLoaded', function() {
-            // ... existing login form code ...
-
             // Navigation handlers
             document.getElementById("store-btn").addEventListener("click", () => { 
                 toggleSection("store"); 
