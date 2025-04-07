@@ -15,14 +15,17 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <link rel="manifest" href="/manifest.json"><style>
+    <link rel="manifest" href="/manifest.json">
+    
+    <style>
         /* Force dark status bar text on iOS */
         @supports (padding-top: env(safe-area-inset-top)) {
-            body {
-                padding-top: env(safe-area-inset-top);
-                padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
-            }
-        }
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+        margin-top: 0; /* Explicitly no margin */
+    }
+}
         
         body {
             background: #1c1c1e;
@@ -374,23 +377,96 @@
             outline: none;
         }
         html, body {
-            -webkit-text-size-adjust: none;
-            touch-action: manipulation;
-        }
-        #login-section { 
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #1c1c1e 0%, #252527 100%);
-            z-index: 2000;
-        }
+    height: 100%; /* Ensure full height */
+    margin: 0; /* Remove default margins */
+    padding: 0; /* Remove default padding */
+    background: var(--bg-gradient); /* Use gradient consistently */
+    -webkit-text-size-adjust: none;
+    touch-action: manipulation;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+html, body {
+    height: 100%; /* Ensure full height */
+    margin: 0; /* Remove default margins */
+    padding: 0; /* Remove default padding */
+    background: var(--bg-gradient); /* Use gradient consistently */
+    -webkit-text-size-adjust: none;
+    touch-action: manipulation;
+    overflow-x: hidden; /* Prevent horizontal scroll */
+}
+
+body {
+    color: #ffffff;
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -ms-overflow-style: none; /* Hide scrollbar for IE and Edge */
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+}
+
+/* Ensure safe area insets don’t create gaps */
+@supports (padding-top: env(safe-area-inset-top)) {
+    body {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: calc(env(safe-area-inset-bottom) + 5rem);
+        margin-top: 0; /* Explicitly no margin */
+    }
+}
+
+/* Hide scrollbar for Chrome, Safari, and Opera */
+body::-webkit-scrollbar, *::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* Loading screen flush to top */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-gradient); /* Match body gradient */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    margin: 0; /* No margin */
+    padding: 0; /* No padding */
+}
+
+/* Login section flush to top */
+#login-section {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0; /* Remove padding to align with top */
+    background: var(--bg-gradient); /* Match body gradient */
+    z-index: 2000;
+    margin: 0; /* No margin */
+}
+
+/* Main content flush to top */
+.container {
+    max-width: 48rem;
+    margin: 0 auto; /* No top/bottom margin, just centering */
+    padding: 0 1rem; /* Remove top padding, keep sides */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh; /* Ensure it fills height */
+}
         #login-section.hidden {
             display: none;
         }
@@ -666,11 +742,26 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        /* Loading screen flush to top */
+#loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-gradient); /* Match body gradient */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000;
+    margin: 0; /* No margin */
+    padding: 0; /* No padding */
+}
     </style>
 </head>
 <body>
     <!-- Loading screen with "Chawp" centered -->
-    <div id="loading-screen" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1c1c1e; display: flex; align-items: center; justify-content: center; z-index: 3000;">
+    <div id="loading-screen">
         <h1 style="font-size: 3rem; font-weight: 600; letter-spacing: -2px; background: linear-gradient(45deg, #007aff, #34c759, #007aff); -webkit-background-clip: text; background-clip: text; color: transparent;">Chawp</h1>
     </div>
 
@@ -679,53 +770,29 @@
         <div class="login-container">
             <h1 class="login-title">Welcome Back</h1>
             <p class="login-subtitle">Sign in to manage your restaurant</p>
-            
             <div id="login-notification" class="notification" style="position: relative; transform: none; left: 0; top: 0; width: 100%; margin-bottom: 1.5rem;"></div>
-            
             <form id="login-form" novalidate>
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
-                    <input 
-                        type="email" 
-                        id="email" 
-                        class="form-input" 
-                        placeholder="Enter your email"
-                        autocomplete="email"
-                        required
-                        aria-required="true"
-                        aria-describedby="email-error"
-                    >
+                    <input type="email" id="email" class="form-input" placeholder="Enter your email" autocomplete="email" required aria-required="true" aria-describedby="email-error">
                     <div id="email-error" class="error-message" role="alert"></div>
                 </div>
-
                 <div class="form-group">
                     <label for="password" class="form-label">Password</label>
                     <div class="password-container">
-                        <input 
-                            type="password" 
-                            id="password" 
-                            class="form-input" 
-                            placeholder="Enter your password"
-                            autocomplete="current-password"
-                            minlength="6"
-                            required
-                            aria-required="true"
-                            aria-describedby="password-error"
-                        >
+                        <input type="password" id="password" class="form-input" placeholder="Enter your password" autocomplete="current-password" minlength="6" required aria-required="true" aria-describedby="password-error">
                         <button type="button" class="password-toggle" id="toggle-password" aria-label="Toggle password visibility">
                             <i class="fas fa-eye"></i>
                         </button>
                     </div>
                     <div id="password-error" class="error-message" role="alert"></div>
                 </div>
-
                 <button type="submit" id="login-btn" class="login-btn">
                     <div class="spinner" id="login-spinner"></div>
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Sign In</span>
                 </button>
             </form>
-
             <div class="signup-link">
                 Don't have an account? <a href="https://wa.me/233593117766" id="signup-link">Contact support</a>
             </div>
