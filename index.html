@@ -476,16 +476,17 @@
         }
         
         .password-toggle {
-            position: absolute;
-            right: 0.75rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.6);
-            cursor: pointer;
-            padding: 0.5rem;
-        }
+    position: absolute;
+    right: 0.75rem;
+    top: 68%; /* was 50%, increase to push it down */
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
         
         .login-btn {
             width: 100%;
@@ -556,8 +557,17 @@
         <div class="login-container">
             <h1 class="login-title">Welcome Back</h1>
             <p class="text-center text-gray-400 mb-4">Sign in to manage your restaurant</p>
-            <div id="login-notification" class="notification" style="position: relative; transform: none; left: 0; top: 0; width: 100%; margin-bottom: 1rem;"></div>
-            <form id="login-form" novalidate>
+            <div id="login-notification" class="notification" style="
+            position: relative;
+            transform: none;
+            left: auto;
+            top: auto;
+            width: 100%;
+            margin: 0 auto 1rem;
+            animation: none;
+        "></div>
+        
+        <form id="login-form" novalidate>
                 <div class="form-group">
                     <label for="email" class="form-label">Email Address</label>
                     <input type="email" id="email" class="form-input" placeholder="Enter your email" autocomplete="email" required>
@@ -1211,39 +1221,66 @@
             }
         });
 
+        
+        // Enhanced notification function for login section
         function showLoginNotification(message, type = "error") {
             const notification = document.getElementById("login-notification");
             if (!notification) return;
             
+            // Clear previous timeout if exists
             if (window.loginNotificationTimer) {
                 clearTimeout(window.loginNotificationTimer);
             }
             
-            const icon = type === "error" ? "fa-circle-exclamation" : 
-                        type === "warning" ? "fa-triangle-exclamation" : 
-                        type === "info" ? "fa-circle-info" : "fa-circle-check";
+            // Set notification content
+            notification.innerHTML = `
+                <i class="fas ${type === "error" ? "fa-exclamation-circle" : 
+                                type === "warning" ? "fa-exclamation-triangle" : 
+                                type === "info" ? "fa-info-circle" : "fa-check-circle"}"></i>
+                <span>${message}</span>
+            `;
             
-            notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
-            notification.className = `notification ${type}`;
+            // Reset classes and apply new ones
+            notification.className = 'notification';
+            notification.classList.add(type);
             
+            // Force reflow for animation
             void notification.offsetWidth;
-            notification.classList.add("show");
             
-            if (type === "error" || type === "warning") {
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-                    audio.play().catch(() => {});
-                } catch (e) {}
-            }
+            // Show notification with smooth animation
+            notification.style.opacity = '1';
+            notification.style.visibility = 'visible';
+            notification.style.transform = 'translateY(0)';
             
-            if (type === "error" && navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-            
+            // Auto-hide after 4 seconds
             window.loginNotificationTimer = setTimeout(() => {
-                notification.classList.remove("show");
-            }, 5000);
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    notification.style.visibility = 'hidden';
+                }, 300);
+            }, 4000);
         }
+
+        // Preload critical resources
+        function preloadResources() {
+            const urls = [
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
+                'https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap'
+            ];
+            
+            urls.forEach(url => {
+                const link = document.createElement('link');
+                link.rel = 'preload';
+                link.as = 'style';
+                link.href = url;
+                document.head.appendChild(link);
+            });
+        }
+
+        // Initialize preloading
+        preloadResources();
+
 
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("store-btn").addEventListener("click", () => { 
@@ -1275,18 +1312,25 @@
         });
     </script>
 
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker registered with scope:', registration.scope);
-                    })
-                    .catch((error) => {
-                        console.error('Service Worker registration failed:', error);
-                    });
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').then(registration => {
+                console.log('ServiceWorker registration successful');
+                // Force update if there's a new service worker
+                registration.update();
+            }).catch(err => {
+                console.log('ServiceWorker registration failed: ', err);
             });
+        });
+    }
+
+    // Immediately hide loading screen if app is cached
+    window.addEventListener('load', () => {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+            document.getElementById('loading-screen').style.display = 'none';
         }
-    </script>
+    });
+</script>
 </body>
 </html>

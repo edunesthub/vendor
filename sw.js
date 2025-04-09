@@ -56,18 +56,20 @@ self.addEventListener("activate", event => {
 // Fetch event - Cache-first strategy with network fallback
 self.addEventListener("fetch", event => {
     const request = event.request;
-    
+
     // Skip non-GET requests and requests to other domains
     if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) {
         return;
     }
-    
-    // Special handling for app shell (HTML)
+
+    // Serve app shell immediately for navigation requests
     if (request.mode === 'navigate') {
         event.respondWith(
-            fetch(request)
-                .catch(() => {
-                    return caches.match('index.html');
+            caches.match('/index.html')
+                .then(cachedResponse => {
+                    const networkFetch = fetch(request).catch(() => cachedResponse);
+                    event.waitUntil(updateCache(request)); // Update cache in background
+                    return cachedResponse || networkFetch;
                 })
         );
         return;
@@ -89,10 +91,7 @@ self.addEventListener("fetch", event => {
                 // Fetch from network if not cached
                 return fetch(request)
                     .then(networkResponse => {
-                        // Clone the response before using it
                         const responseToCache = networkResponse.clone();
-                        
-                        // Cache successful responses
                         if (networkResponse && networkResponse.status === 200) {
                             caches.open(CACHE_NAME)
                                 .then(cache => cache.put(request, responseToCache))
@@ -102,7 +101,6 @@ self.addEventListener("fetch", event => {
                     })
                     .catch(err => {
                         console.warn("Fetch failed:", err);
-                        // Offline fallback for navigation requests
                         if (request.mode === "navigate") {
                             return caches.match("index.html")
                                 .then(fallback => fallback || Promise.reject("No fallback available"));
