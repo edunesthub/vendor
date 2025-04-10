@@ -663,7 +663,7 @@
         import { 
             getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
         } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-
+    
         const firebaseConfig = {
             apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
             authDomain: "von600-7982d.firebaseapp.com",
@@ -673,13 +673,19 @@
             appId: "1:164591218045:web:afe17512e16573e7903014",
             measurementId: "G-E69DMPLXBK"
         };
-
+    
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         let restaurantId = null;
         let selectedMenuId = null;
-
+    
+        // Dashboard persistence variables
+        let lastResetDate = null;
+        let beingDeliveredToday = 0;
+        let totalAmountToday = 0;
+        let activeDeliveries = 0;
+    
         const loadingScreen = document.getElementById("loading-screen");
         const loginSection = document.getElementById("login-section");
         const mainContent = document.getElementById("main-content");
@@ -688,7 +694,7 @@
         const ordersList = document.getElementById("orders-list");
         const deliveredList = document.getElementById("delivered-list");
         const dashboardGrid = document.getElementById("dashboard-grid");
-
+    
         function showNotification(message, type = "success") {
             const notification = document.getElementById("notification");
             
@@ -721,7 +727,7 @@
                 notification.classList.remove("show");
             }, 4000);
         }
-
+    
         function toggleSection(sectionId) {
             const sections = ["store", "manage-menu", "view-orders", "delivered", "settings"];
             sections.forEach(id => {
@@ -729,64 +735,91 @@
                 document.getElementById(`${id}-btn`).classList.toggle("active", id === sectionId);
             });
         }
-
+    
+        function setupDashboardListener() {
+            if (!restaurantId) return;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayTimestamp = today.getTime();
+    
+            // Check if it's a new day and reset counts if needed
+            const currentDate = today.toDateString();
+            if (lastResetDate !== currentDate) {
+                beingDeliveredToday = 0;
+                totalAmountToday = 0;
+                activeDeliveries = 0;
+                lastResetDate = currentDate;
+            }
+    
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                const now = new Date();
+                now.setHours(0, 0, 0, 0);
+                const nowTimestamp = now.getTime();
+    
+                // Reset counts if it's a new day (midnight check)
+                if (lastResetDate !== now.toDateString()) {
+                    beingDeliveredToday = 0;
+                    totalAmountToday = 0;
+                    activeDeliveries = 0;
+                    lastResetDate = now.toDateString();
+                }
+    
+                // Recalculate counts based on current snapshot
+                snapshot.forEach(doc => {
+                    const order = doc.data();
+                    const timestamp = new Date(order.timestamp).getTime();
+    
+                    if (order.status === "being_delivered" && timestamp >= todayTimestamp && !order.counted) {
+                        beingDeliveredToday++;
+                        totalAmountToday += order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                        updateDoc(doc(db, "orders", doc.id), { counted: true }); // Mark as counted
+                    }
+                });
+                activeDeliveries = snapshot.docs.filter(d => d.data().status === "being_delivered").length;
+    
+                // Update UI
+                dashboardGrid.innerHTML = `
+                    <div class="dashboard-card">
+                        <h3>Today's Orders</h3>
+                        <p>${beingDeliveredToday}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Today's Earnings</h3>
+                        <p>GH₵${totalAmountToday.toFixed(2)}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Active Deliveries</h3>
+                        <p>${activeDeliveries}</p>
+                    </div>
+                `;
+            }, (error) => {
+                console.error("Dashboard error:", error);
+                dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
+            });
+        }
+    
         async function loadDashboard() {
-    if (!restaurantId) return;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayTimestamp = today.getTime();
-
-    let activeDeliveries = 0;
-    let beingDeliveredToday = 0;
-
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        activeDeliveries = 0;
-        beingDeliveredToday = 0;
-
-        snapshot.forEach(doc => {
-            const order = doc.data();
-            const timestamp = new Date(order.timestamp).getTime();
-
-            if (order.status === "being_delivered" && timestamp >= todayTimestamp) {
-                beingDeliveredToday++;
+            if (!restaurantId) return;
+            // Only update UI if already initialized, no reset logic here
+            if (lastResetDate) {
+                dashboardGrid.innerHTML = `
+                    <div class="dashboard-card">
+                        <h3>Today's Orders</h3>
+                        <p>${beingDeliveredToday}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Today's Earnings</h3>
+                        <p>GH₵${totalAmountToday.toFixed(2)}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Active Deliveries</h3>
+                        <p>${activeDeliveries}</p>
+                    </div>
+                `;
             }
-            if (order.status === "being_delivered") {
-                activeDeliveries++;
-            }
-        });
-
-        const totalAmountToday = snapshot.docs
-            .filter(doc => {
-                const order = doc.data();
-                const timestamp = new Date(order.timestamp).getTime();
-                return order.status === "being_delivered" && timestamp >= todayTimestamp;
-            })
-            .reduce((sum, doc) => {
-                const order = doc.data();
-                return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
-            }, 0);
-
-        dashboardGrid.innerHTML = `
-            <div class="dashboard-card">
-                <h3>Today's Orders</h3>
-                <p>${beingDeliveredToday}</p>
-            </div>
-            <div class="dashboard-card">
-                <h3>Today's Earnings</h3>
-                <p>GH₵${totalAmountToday.toFixed(2)}</p>
-            </div>
-            <div class="dashboard-card">
-                <h3>Active Deliveries</h3>
-                <p>${activeDeliveries}</p>
-            </div>
-        `;
-    }, (error) => {
-        console.error("Dashboard error:", error);
-        dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
-    });
-}
-
+        }
+    
         async function loadRestaurantData() {
             if (!restaurantId) return;
             const docRef = doc(db, "restaurant", restaurantId);
@@ -802,7 +835,7 @@
                 document.getElementById("status-text").style.color = isOpen ? "#34c759" : "#ff3b30";
             }
         }
-
+    
         async function loadMenu() {
             if (!restaurantId) return;
             menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
@@ -829,7 +862,7 @@
             menuList.appendChild(fragment);
             if (!querySnapshot.size) menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet.</p>";
         }
-
+    
         async function showMenuDetails(menuId) {
             if (selectedMenuId === menuId && !document.getElementById(`details-${menuId}`).classList.contains("hidden")) {
                 document.getElementById(`details-${menuId}`).classList.remove("hidden");
@@ -860,7 +893,7 @@
             detailsDiv.querySelector(".btn-edit").addEventListener("click", () => showEditMenu(menuId));
             detailsDiv.querySelector(".delete-menu-btn").addEventListener("click", () => deleteMenuItem(menuId));
         }
-
+    
         async function showEditMenu(menuId) {
             const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
             const docSnap = await getDoc(docRef);
@@ -909,79 +942,78 @@
             editDiv.querySelector(".add-extra-btn").addEventListener("click", () => addExtra(menuId));
             editDiv.querySelector(".save-menu-btn").addEventListener("click", () => saveMenuItem(menuId));
         }
-
+    
         function loadOrders() {
-    if (!restaurantId) return;
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const fragment = document.createDocumentFragment();
-        orders.forEach(order => {
-            const itemsList = order.items.map(item => `<span style="font-size: 1.2rem;">${item.quantity}x ${item.name} - GH₵${(item.price * item.quantity).toFixed(2)}</span>`).join("<br>");
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const item = document.createElement("div");
-            item.className = "order-item";
-            item.innerHTML = `
-                <h4 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Order ID: ${order.id}</h4>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Items:</strong><br>${itemsList}</p>
-                <p style="font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0;"><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Note:</strong> ${order.note || "None"}</p>
-                <p style="font-size: 1.3rem; font-weight: 700; color: #007aff; margin: 0.5rem 0;"><strong>Status:</strong> Pending</p>
-                <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}" style="font-size: 1.2rem; padding: 1rem;">Mark as Being Delivered</button>
-            `;
-            fragment.appendChild(item);
-        });
-        ordersList.innerHTML = "";
-        ordersList.appendChild(fragment);
-        if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400' style='font-size: 1.2rem;'>No pending orders.</p>";
-        ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
-    });
-}
-
-function loadDeliveredOrders() {
-    if (!restaurantId) return;
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(order => order.status === "delivered" || order.status === "not_delivered")
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const fragment = document.createDocumentFragment();
-        orders.forEach(order => {
-            const itemsList = order.items.map(item => `<span style="font-size: 1.2rem;">${item.quantity}x ${item.name} - GH₵${(item.price * item.quantity).toFixed(2)}</span>`).join("<br>");
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const deliveryDetails = order.deliveryDetails || {};
-            const statusColor = order.status === "delivered" ? "#34c759" : "#ff3b30"; // Green for delivered, red for not delivered
-            const item = document.createElement("div");
-            item.className = "order-item";
-            item.innerHTML = `
-                <h4 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Order ID: ${order.id}</h4>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Items:</strong><br>${itemsList}</p>
-                <p style="font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0;"><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Note:</strong> ${order.note || "None"}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
-                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                <p style="font-size: 1.3rem; font-weight: 700; color: ${statusColor}; margin: 0.5rem 0;"><strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</p>
-            `;
-            fragment.appendChild(item);
-        });
-        deliveredList.innerHTML = "";
-        deliveredList.appendChild(fragment);
-        if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400' style='font-size: 1.2rem;'>No delivery status yet.</p>";
-    });
-}
-async function markOrderAsBeingDelivered(orderId) {
-    await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
-    showNotification("Order marked as being delivered!");
-    loadDashboard(); // Trigger dashboard update
-}
-
+            if (!restaurantId) return;
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                const orders = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const fragment = document.createDocumentFragment();
+                orders.forEach(order => {
+                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const item = document.createElement("div");
+                    item.className = "order-item";
+                    item.innerHTML = `
+                        <p><strong>Items:</strong> ${items}</p>
+                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                        <p><strong>Order ID:</strong> ${order.id}</p>
+                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                        <p><strong>Note:</strong> ${order.note || "None"}</p>
+                        <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+                    `;
+                    fragment.appendChild(item);
+                });
+                ordersList.innerHTML = "";
+                ordersList.appendChild(fragment);
+                if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
+                ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
+            });
+        }
+    
+        function loadDeliveredOrders() {
+            if (!restaurantId) return;
+            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+            onSnapshot(q, (snapshot) => {
+                const orders = snapshot.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(order => order.status === "delivered" || order.status === "not_delivered")
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                const fragment = document.createDocumentFragment();
+                orders.forEach(order => {
+                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const deliveryDetails = order.deliveryDetails || {};
+                    const item = document.createElement("div");
+                    item.className = "order-item";
+                    item.innerHTML = `
+                        <p><strong>Order ID:</strong> ${order.id}</p>
+                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                        <p><strong>Items:</strong> ${items}</p>
+                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                        <p><strong>Note:</strong> ${order.note || "None"}</p>
+                        <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                        <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
+                        <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
+                        <p><strong>Status:</strong> ${order.status}</p>
+                    `;
+                    fragment.appendChild(item);
+                });
+                deliveredList.innerHTML = "";
+                deliveredList.appendChild(fragment);
+                if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
+            });
+        }
+    
+        async function markOrderAsBeingDelivered(orderId) {
+            await updateDoc(doc(db, "orders", orderId), { status: "being_delivered", counted: false });
+            showNotification("Order marked as being delivered!");
+            loadDashboard(); // Refresh UI without resetting counts
+        }
+    
         document.getElementById("store-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = document.getElementById("store-name").value;
@@ -990,7 +1022,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Store updated successfully!");
             loadRestaurantData();
         });
-
+    
         document.getElementById("delete-store").addEventListener("click", async () => {
             if (!confirm("Are you sure you want to delete your store? This will remove all associated data and cannot be undone.")) return;
             const menuRef = collection(db, "restaurant", restaurantId, "menu");
@@ -1001,26 +1033,26 @@ async function markOrderAsBeingDelivered(orderId) {
             document.getElementById("settings").innerHTML = "<p class='text-gray-400'>Store deleted.</p>";
             loadRestaurantData();
         });
-
+    
         document.getElementById("open-shop-btn").addEventListener("click", async () => {
             await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
             showNotification("Shop opened!");
             loadRestaurantData();
         });
-
+    
         document.getElementById("close-shop-btn").addEventListener("click", async () => {
             await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
             showNotification("Shop closed!");
             loadRestaurantData();
         });
-
+    
         async function deleteMenuItem(menuId) {
             if (!confirm("Are you sure you want to delete this dish? This action cannot be undone.")) return;
             await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
             showNotification("Dish deleted!", "error");
             loadMenu();
         }
-
+    
         document.getElementById("menu-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = document.getElementById("menu-name").value;
@@ -1032,7 +1064,7 @@ async function markOrderAsBeingDelivered(orderId) {
             document.getElementById("menu-price").value = "";
             loadMenu();
         });
-
+    
         async function addSize(menuId) {
             const name = document.getElementById(`new-size-name-${menuId}`).value;
             const price = parseFloat(document.getElementById(`new-size-price-${menuId}`).value);
@@ -1045,7 +1077,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Size added!");
             showEditMenu(menuId);
         }
-
+    
         async function addExtra(menuId) {
             const name = document.getElementById(`new-extra-name-${menuId}`).value;
             const price = parseFloat(document.getElementById(`new-extra-price-${menuId}`).value);
@@ -1058,7 +1090,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Extra added!");
             showEditMenu(menuId);
         }
-
+    
         async function deleteSize(menuId, index) {
             if (!confirm("Are you sure you want to delete this size?")) return;
             const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
@@ -1069,7 +1101,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Size deleted!", "error");
             showEditMenu(menuId);
         }
-
+    
         async function deleteExtra(menuId, index) {
             if (!confirm("Are you sure you want to delete this extra?")) return;
             const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
@@ -1080,7 +1112,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Extra deleted!", "error");
             showEditMenu(menuId);
         }
-
+    
         async function saveMenuItem(menuId) {
             const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
             const docSnap = await getDoc(docRef);
@@ -1102,7 +1134,7 @@ async function markOrderAsBeingDelivered(orderId) {
             showNotification("Changes saved!");
             loadMenu();
         }
-
+    
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const mappingRef = doc(db, "vendorMappings", user.email);
@@ -1112,7 +1144,8 @@ async function markOrderAsBeingDelivered(orderId) {
                     loadingScreen.style.display = "none";
                     loginSection.style.display = "none";
                     mainContent.classList.remove("hidden");
-                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
+                    setupDashboardListener(); // Set up listener once
+                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders()]);
                 } else {
                     signOut(auth);
                     loadingScreen.style.display = "none";
@@ -1133,7 +1166,7 @@ async function markOrderAsBeingDelivered(orderId) {
                 }, 1000);
             }
         });
-
+    
         document.addEventListener('DOMContentLoaded', function() {
             const loginButton = document.getElementById('login-btn');
             const spinner = document.getElementById('login-spinner');
@@ -1209,7 +1242,7 @@ async function markOrderAsBeingDelivered(orderId) {
                 }
             });
         });
-
+    
         document.getElementById("toggle-password").addEventListener("click", function() {
             const passwordInput = document.getElementById("password");
             const icon = this.querySelector("i");
@@ -1223,19 +1256,15 @@ async function markOrderAsBeingDelivered(orderId) {
                 icon.classList.add("fa-eye");
             }
         });
-
-        
-        // Enhanced notification function for login section
+    
         function showLoginNotification(message, type = "error") {
             const notification = document.getElementById("login-notification");
             if (!notification) return;
             
-            // Clear previous timeout if exists
             if (window.loginNotificationTimer) {
                 clearTimeout(window.loginNotificationTimer);
             }
             
-            // Set notification content
             notification.innerHTML = `
                 <i class="fas ${type === "error" ? "fa-exclamation-circle" : 
                                 type === "warning" ? "fa-exclamation-triangle" : 
@@ -1243,19 +1272,15 @@ async function markOrderAsBeingDelivered(orderId) {
                 <span>${message}</span>
             `;
             
-            // Reset classes and apply new ones
             notification.className = 'notification';
             notification.classList.add(type);
             
-            // Force reflow for animation
             void notification.offsetWidth;
             
-            // Show notification with smooth animation
             notification.style.opacity = '1';
             notification.style.visibility = 'visible';
             notification.style.transform = 'translateY(0)';
             
-            // Auto-hide after 4 seconds
             window.loginNotificationTimer = setTimeout(() => {
                 notification.style.opacity = '0';
                 notification.style.transform = 'translateY(-10px)';
@@ -1264,8 +1289,7 @@ async function markOrderAsBeingDelivered(orderId) {
                 }, 300);
             }, 4000);
         }
-
-        // Preload critical resources
+    
         function preloadResources() {
             const urls = [
                 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css',
@@ -1280,51 +1304,48 @@ async function markOrderAsBeingDelivered(orderId) {
                 document.head.appendChild(link);
             });
         }
-
-        // Initialize preloading
+    
         preloadResources();
-
-
+    
         document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById("store-btn").addEventListener("click", () => { 
-        toggleSection("store"); 
-        loadDashboard(); 
-    });
-    
-    document.getElementById("manage-menu-btn").addEventListener("click", () => { 
-        toggleSection("manage-menu"); 
-        loadMenu(); 
-    });
-    
-    document.getElementById("view-orders-btn").addEventListener("click", () => { 
-        toggleSection("view-orders"); 
-        loadOrders(); 
-    });
-    
-    document.getElementById("delivered-btn").addEventListener("click", () => { 
-        toggleSection("delivered"); 
-        loadDeliveredOrders(); 
-    });
-    
-    document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
-
-    document.getElementById("logout-btn").addEventListener("click", async () => {
-        await signOut(auth);
-        showNotification("Logged out successfully!", "success");
-    });
-
-    document.getElementById("refresh-app-btn").addEventListener("click", () => {
-        if ('caches' in window) {
-            caches.keys().then(names => {
-                names.forEach(name => caches.delete(name));
+            document.getElementById("store-btn").addEventListener("click", () => { 
+                toggleSection("store"); 
+                loadDashboard(); // Just refreshes UI, no reset
             });
-        }
-        location.reload(true);
-        showNotification("App refreshed!", "success");
-    });
-});
+            
+            document.getElementById("manage-menu-btn").addEventListener("click", () => { 
+                toggleSection("manage-menu"); 
+                loadMenu(); 
+            });
+            
+            document.getElementById("view-orders-btn").addEventListener("click", () => { 
+                toggleSection("view-orders"); 
+                loadOrders(); 
+            });
+            
+            document.getElementById("delivered-btn").addEventListener("click", () => { 
+                toggleSection("delivered"); 
+                loadDeliveredOrders(); 
+            });
+            
+            document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+    
+            document.getElementById("logout-btn").addEventListener("click", async () => {
+                await signOut(auth);
+                showNotification("Logged out successfully!", "success");
+            });
+    
+            document.getElementById("refresh-app-btn").addEventListener("click", () => {
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => caches.delete(name));
+                    });
+                }
+                location.reload(true);
+                showNotification("App refreshed!", "success");
+            });
+        });
     </script>
-
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
