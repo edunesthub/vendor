@@ -641,6 +641,7 @@
                 <button type="submit" class="btn">Update Store</button>
             </form>
             <button id="delete-store" class="btn btn-secondary">Delete Store</button>
+            <button id="refresh-app-btn" class="btn" style="background: #5856d6; margin-top: 0.5rem;">Refresh App</button>
             <button id="logout-btn" class="btn btn-secondary mt-2">Logout</button>
             <p class="text-gray-400 mt-4 text-sm">More settings coming soon.</p>
         </div>
@@ -1283,33 +1284,43 @@
 
 
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById("store-btn").addEventListener("click", () => { 
-                toggleSection("store"); 
-                loadDashboard(); 
-            });
-            
-            document.getElementById("manage-menu-btn").addEventListener("click", () => { 
-                toggleSection("manage-menu"); 
-                loadMenu(); 
-            });
-            
-            document.getElementById("view-orders-btn").addEventListener("click", () => { 
-                toggleSection("view-orders"); 
-                loadOrders(); 
-            });
-            
-            document.getElementById("delivered-btn").addEventListener("click", () => { 
-                toggleSection("delivered"); 
-                loadDeliveredOrders(); 
-            });
-            
-            document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+    document.getElementById("store-btn").addEventListener("click", () => { 
+        toggleSection("store"); 
+        loadDashboard(); 
+    });
+    
+    document.getElementById("manage-menu-btn").addEventListener("click", () => { 
+        toggleSection("manage-menu"); 
+        loadMenu(); 
+    });
+    
+    document.getElementById("view-orders-btn").addEventListener("click", () => { 
+        toggleSection("view-orders"); 
+        loadOrders(); 
+    });
+    
+    document.getElementById("delivered-btn").addEventListener("click", () => { 
+        toggleSection("delivered"); 
+        loadDeliveredOrders(); 
+    });
+    
+    document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
 
-            document.getElementById("logout-btn").addEventListener("click", async () => {
-                await signOut(auth);
-                showNotification("Logged out successfully!", "success");
+    document.getElementById("logout-btn").addEventListener("click", async () => {
+        await signOut(auth);
+        showNotification("Logged out successfully!", "success");
+    });
+
+    document.getElementById("refresh-app-btn").addEventListener("click", () => {
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => caches.delete(name));
             });
-        });
+        }
+        location.reload(true); // Hard reload, bypassing cache
+        showNotification("App refreshed!", "success");
+    });
+});
     </script>
 
 <script>
