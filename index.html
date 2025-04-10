@@ -730,61 +730,61 @@
         }
 
         async function loadDashboard() {
-            if (!restaurantId) return;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayTimestamp = today.getTime();
+    if (!restaurantId) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
 
-            let activeDeliveries = 0;
-            let completedToday = 0;
+    let activeDeliveries = 0;
+    let beingDeliveredToday = 0;
 
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                activeDeliveries = 0;
-                completedToday = 0;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        activeDeliveries = 0;
+        beingDeliveredToday = 0;
 
-                snapshot.forEach(doc => {
-                    const order = doc.data();
-                    const timestamp = new Date(order.timestamp).getTime();
+        snapshot.forEach(doc => {
+            const order = doc.data();
+            const timestamp = new Date(order.timestamp).getTime();
 
-                    if (order.status === "delivered" && timestamp >= todayTimestamp) {
-                        completedToday++;
-                    }
-                    if (order.status === "being_delivered") {
-                        activeDeliveries++;
-                    }
-                });
+            if (order.status === "being_delivered" && timestamp >= todayTimestamp) {
+                beingDeliveredToday++;
+            }
+            if (order.status === "being_delivered") {
+                activeDeliveries++;
+            }
+        });
 
-                const totalAmountToday = snapshot.docs
-                    .filter(doc => {
-                        const order = doc.data();
-                        const timestamp = new Date(order.timestamp).getTime();
-                        return order.status === "delivered" && timestamp >= todayTimestamp;
-                    })
-                    .reduce((sum, doc) => {
-                        const order = doc.data();
-                        return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
-                    }, 0);
+        const totalAmountToday = snapshot.docs
+            .filter(doc => {
+                const order = doc.data();
+                const timestamp = new Date(order.timestamp).getTime();
+                return order.status === "being_delivered" && timestamp >= todayTimestamp;
+            })
+            .reduce((sum, doc) => {
+                const order = doc.data();
+                return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
+            }, 0);
 
-                dashboardGrid.innerHTML = `
-                    <div class="dashboard-card">
-                        <h3>Today's Orders</h3>
-                        <p>${completedToday}</p>
-                    </div>
-                    <div class="dashboard-card">
-                        <h3>Today's Earnings</h3>
-                        <p>GH₵${totalAmountToday.toFixed(2)}</p>
-                    </div>
-                    <div class="dashboard-card">
-                        <h3>Active Deliveries</h3>
-                        <p>${activeDeliveries}</p>
-                    </div>
-                `;
-            }, (error) => {
-                console.error("Dashboard error:", error);
-                dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
-            });
-        }
+        dashboardGrid.innerHTML = `
+            <div class="dashboard-card">
+                <h3>Today's Orders</h3>
+                <p>${beingDeliveredToday}</p>
+            </div>
+            <div class="dashboard-card">
+                <h3>Today's Earnings</h3>
+                <p>GH₵${totalAmountToday.toFixed(2)}</p>
+            </div>
+            <div class="dashboard-card">
+                <h3>Active Deliveries</h3>
+                <p>${activeDeliveries}</p>
+            </div>
+        `;
+    }, (error) => {
+        console.error("Dashboard error:", error);
+        dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
+    });
+}
 
         async function loadRestaurantData() {
             if (!restaurantId) return;
@@ -910,74 +910,76 @@
         }
 
         function loadOrders() {
-            if (!restaurantId) return;
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                const orders = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const fragment = document.createDocumentFragment();
-                orders.forEach(order => {
-                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    const item = document.createElement("div");
-                    item.className = "order-item";
-                    item.innerHTML = `
-                        <p><strong>Items:</strong> ${items}</p>
-                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                        <p><strong>Order ID:</strong> ${order.id}</p>
-                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                        <p><strong>Note:</strong> ${order.note || "None"}</p>
-                        <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
-                    `;
-                    fragment.appendChild(item);
-                });
-                ordersList.innerHTML = "";
-                ordersList.appendChild(fragment);
-                if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
-                ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
-            });
-        }
+    if (!restaurantId) return;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const fragment = document.createDocumentFragment();
+        orders.forEach(order => {
+            const itemsList = order.items.map(item => `<span style="font-size: 1.2rem;">${item.quantity}x ${item.name} - GH₵${(item.price * item.quantity).toFixed(2)}</span>`).join("<br>");
+            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const item = document.createElement("div");
+            item.className = "order-item";
+            item.innerHTML = `
+                <h4 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Order ID: ${order.id}</h4>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Items:</strong><br>${itemsList}</p>
+                <p style="font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0;"><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Note:</strong> ${order.note || "None"}</p>
+                <p style="font-size: 1.3rem; font-weight: 700; color: #007aff; margin: 0.5rem 0;"><strong>Status:</strong> Pending</p>
+                <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}" style="font-size: 1.2rem; padding: 1rem;">Mark as Being Delivered</button>
+            `;
+            fragment.appendChild(item);
+        });
+        ordersList.innerHTML = "";
+        ordersList.appendChild(fragment);
+        if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400' style='font-size: 1.2rem;'>No pending orders.</p>";
+        ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
+    });
+}
 
-        function loadDeliveredOrders() {
-            if (!restaurantId) return;
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                const orders = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(order => order.status === "delivered" || order.status === "not_delivered")
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const fragment = document.createDocumentFragment();
-                orders.forEach(order => {
-                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    const deliveryDetails = order.deliveryDetails || {};
-                    const item = document.createElement("div");
-                    item.className = "order-item";
-                    item.innerHTML = `
-                        <p><strong>Order ID:</strong> ${order.id}</p>
-                        <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                        <p><strong>Items:</strong> ${items}</p>
-                        <p><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
-                        <p><strong>Note:</strong> ${order.note || "None"}</p>
-                        <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                        <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
-                        <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                        <p><strong>Status:</strong> ${order.status}</p>
-                    `;
-                    fragment.appendChild(item);
-                });
-                deliveredList.innerHTML = "";
-                deliveredList.appendChild(fragment);
-                if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
-            });
-        }
-
-        async function markOrderAsBeingDelivered(orderId) {
-            await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
-            showNotification("Order marked as being delivered!");
-        }
+function loadDeliveredOrders() {
+    if (!restaurantId) return;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(order => order.status === "delivered" || order.status === "not_delivered")
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const fragment = document.createDocumentFragment();
+        orders.forEach(order => {
+            const itemsList = order.items.map(item => `<span style="font-size: 1.2rem;">${item.quantity}x ${item.name} - GH₵${(item.price * item.quantity).toFixed(2)}</span>`).join("<br>");
+            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const deliveryDetails = order.deliveryDetails || {};
+            const statusColor = order.status === "delivered" ? "#34c759" : "#ff3b30"; // Green for delivered, red for not delivered
+            const item = document.createElement("div");
+            item.className = "order-item";
+            item.innerHTML = `
+                <h4 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">Order ID: ${order.id}</h4>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Items:</strong><br>${itemsList}</p>
+                <p style="font-size: 1.4rem; font-weight: 600; margin: 0.5rem 0;"><strong>Total:</strong> GH₵${subtotal.toFixed(2)}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Note:</strong> ${order.note || "None"}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
+                <p style="font-size: 1.2rem; margin: 0.5rem 0;"><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
+                <p style="font-size: 1.3rem; font-weight: 700; color: ${statusColor}; margin: 0.5rem 0;"><strong>Status:</strong> ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}</p>
+            `;
+            fragment.appendChild(item);
+        });
+        deliveredList.innerHTML = "";
+        deliveredList.appendChild(fragment);
+        if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400' style='font-size: 1.2rem;'>No delivery status yet.</p>";
+    });
+}
+async function markOrderAsBeingDelivered(orderId) {
+    await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
+    showNotification("Order marked as being delivered!");
+    loadDashboard(); // Trigger dashboard update
+}
 
         document.getElementById("store-form").addEventListener("submit", async (e) => {
             e.preventDefault();
