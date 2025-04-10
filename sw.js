@@ -1,4 +1,4 @@
-const CACHE_NAME = "vendor-portal-cache-v8"; // Updated cache version
+const CACHE_NAME = "vendor-portal-cache-v9"; // Updated cache version
 const urlsToCache = [
     "/",
     "/index.html",
