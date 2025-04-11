@@ -249,7 +249,7 @@
             width: 100%;
         }
         
-        .menu-list .menu-item, .order-item {
+        .order-item {
             background: #2c2c2e;
             padding: 1rem;
             border-radius: 0.875rem;
@@ -261,13 +261,13 @@
             will-change: transform;
         }
         
-        .menu-item h4, .order-item h4 {
+        .order-item h4 {
             margin: 0 0 0.5rem;
             font-size: 1rem;
             font-weight: 600;
         }
         
-        .menu-item p, .order-item p {
+        .order-item p {
             margin: 0.25rem 0;
             font-size: 0.9rem;
             opacity: 0.9;
@@ -298,47 +298,6 @@
             text-align: left;
         }
 
-        .menu-item .details {
-            margin-top: 0.75rem;
-        }
-        
-        .variation {
-            display: flex;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
-            align-items: center;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        
-        .variation input {
-            flex: 1;
-            min-width: 5rem;
-        }
-        
-        .variation .input-price {
-            width: 5rem;
-        }
-        
-        .menu-details {
-            background: #343436;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
-            margin-top: 0.75rem;
-            text-align: left;
-        }
-        
-        .menu-details p {
-            margin: 0.25rem 0;
-            font-size: 0.85rem;
-        }
-        
-        .menu-details h5 {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin: 0.5rem 0 0.25rem;
-        }
-        
         .footer-nav {
             position: fixed;
             bottom: 0;
@@ -545,6 +504,308 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Menu Management Styles */
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .menu-item {
+            background: #2c2c2e;
+            padding: 1rem;
+            border-radius: 0.875rem;
+            text-align: left;
+            transition: all 0.15s ease-out;
+        }
+        .menu-item h4 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin: 0 0 0.5rem;
+        }
+        .menu-item p {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin: 0.25rem 0;
+            word-wrap: break-word;
+        }
+        .menu-item .options-toggle {
+            color: #007aff;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .menu-item .options-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .menu-item .options-details.show {
+            max-height: 10rem;
+        }
+        .menu-item-actions {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-top: 0.75rem;
+        }
+        .menu-item-actions .btn {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            min-height: 2.5rem;
+            max-width: 6rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: #3a3a3c;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            width: 95%;
+            max-width: 28rem;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease-out;
+            color: #ffffff;
+            font-family: 'SF Pro Display', sans-serif;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #007aff, #34c759);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .modal-instructions {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin: 0.5rem 0;
+        }
+
+        .help-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #5856d6;
+            padding: 0.5rem 1rem;
+            border-radius: 0.75rem;
+            color: #ffffff;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #ffffff;
+        }
+
+        .input {
+            background: #4a4a4c;
+            border: 2px solid transparent;
+            color: #ffffff;
+            padding: 1rem;
+            border-radius: 1rem;
+            width: 100%;
+            font-size: 1.3rem;
+            box-shadow: inset 0 0.1rem 0.2rem rgba(0, 0, 0, 0.3);
+            transition: border 0.2s ease;
+        }
+
+        .input:focus {
+            border: 2px solid #007aff;
+            background: #4a4a4c;
+            outline: none;
+        }
+
+        .error-message {
+            color: #ff3b30;
+            font-size: 1rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .option-group {
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            background: #454547;
+        }
+
+        .toggle-btn {
+            background: #5856d6;
+            color: #ffffff;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            width: 100%;
+            text-align: left;
+            font-size: 1.3rem;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .toggle-btn[aria-expanded="true"] .fa-chevron-down {
+            transform: rotate(180deg);
+        }
+
+        .option-list {
+            margin-top: 1rem;
+            max-height: 12rem;
+            overflow-y: auto;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            background: #4a4a4c;
+        }
+
+        .option-item p {
+            flex: 1;
+            font-size: 1.2rem;
+            margin: 0;
+        }
+
+        .option-item .btn {
+            padding: 0.75rem;
+            min-height: 3rem;
+            font-size: 1rem;
+            max-width: 3rem;
+        }
+
+        .btn {
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 1.3rem;
+            font-weight: 500;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            min-height: 3.5rem;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .btn:hover {
+            transform: scale(1.02);
+        }
+
+        .btn-save {
+            background: #34c759;
+        }
+
+        .btn-save:hover {
+            background: #2ea44f;
+        }
+
+        .btn-cancel {
+            background: #ff3b30;
+        }
+
+        .btn-cancel:hover {
+            background: #dc2626;
+        }
+
+        .btn-add {
+            background: #007aff;
+        }
+
+        .btn-add:hover {
+            background: #0062cc;
+        }
+
+        .btn-undo {
+            background: #f59e0b;
+        }
+
+        .btn-undo:hover {
+            background: #d97706;
+        }
+
+        .help-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(58, 58, 60, 0.95);
+            padding: 2rem;
+            border-radius: 1.5rem;
+            z-index: 10;
+        }
+
+        .help-overlay h4 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .help-overlay p {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .btn-close-help {
+            background: #007aff;
+            width: 100%;
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 1.3rem;
+            color: #ffffff;
+        }
+
         @media (max-width: 480px) {
             .section {
                 padding: 1rem;
@@ -566,6 +827,34 @@
             
             .footer-nav button span {
                 font-size: 0.7rem;
+            }
+            
+            .modal-content {
+                padding: 1.5rem;
+                width: 90%;
+            }
+            
+            .modal-header h3 {
+                font-size: 1.75rem;
+            }
+            
+            .form-label {
+                font-size: 1.3rem;
+            }
+            
+            .input {
+                font-size: 1.2rem;
+                padding: 0.75rem;
+            }
+            
+            .btn {
+                font-size: 1.2rem;
+                padding: 0.75rem;
+            }
+            
+            .option-item {
+                flex-direction: column;
+                gap: 0.75rem;
             }
         }
     </style>
@@ -633,15 +922,55 @@
         </div>
 
         <div id="manage-menu" class="section hidden">
-            <h2 class="text-xl font-semibold mb-3">Manage Menu</h2>
-            <form id="menu-form" class="mb-4">
-                <label for="menu-name" class="form-label">Dish Name</label>
-                <input type="text" id="menu-name" placeholder="e.g., Chicken Burger" class="input">
-                <label for="menu-price" class="form-label">Price (GH₵)</label>
-                <input type="number" id="menu-price" placeholder="e.g., 15.00" step="0.01" class="input">
-                <button type="submit" class="btn mt-2">Add New Dish</button>
-            </form>
+            <h2 class="text-xl font-semibold mb-3">Menu Management</h2>
+            <p class="text-center mb-4">Add or update your dishes with ease.</p>
+            <button id="add-dish-btn" class="btn">Add New Dish</button>
             <div id="menu-list" class="menu-list"></div>
+            <div id="menu-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modal-title">Add Dish</h3>
+                        <p class="modal-instructions">Fill in the dish details below. Save when done!</p>
+                        <button class="help-btn" id="help-btn" aria-label="Show help"><i class="fas fa-question-circle"></i> Help</button>
+                    </div>
+                    <form id="menu-form" novalidate>
+                        <div class="form-group">
+                            <label for="menu-name" class="form-label">Dish Name</label>
+                            <input type="text" id="menu-name" class="input" placeholder="Enter dish name (e.g., Chicken Soup)" required aria-describedby="menu-name-error">
+                            <span id="menu-name-error" class="error-message"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="menu-price" class="form-label">Base Price (GH₵)</label>
+                            <input type="number" id="menu-price" class="input" placeholder="Enter price (e.g., 25.00)" step="0.01" min="0" required aria-describedby="menu-price-error">
+                            <span id="menu-price-error" class="error-message"></span>
+                        </div>
+                        <div class="option-group" id="sizes-group">
+                            <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="size-list">Sizes <i class="fas fa-chevron-down"></i></button>
+                            <div id="size-list" class="option-list hidden"></div>
+                            <button type="button" id="add-size-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Size</button>
+                        </div>
+                        <div class="option-group" id="extras-group">
+                            <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="extra-list">Extras <i class="fas fa-chevron-down"></i></button>
+                            <div id="extra-list" class="option-list hidden"></div>
+                            <button type="button" id="add-extra-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Extra</button>
+                        </div>
+                        <div class="modal-actions">
+                            <button type="submit" id="save-dish-btn" class="btn btn-save"><i class="fas fa-save"></i> Save</button>
+                            <button type="button" id="cancel-dish-btn" class="btn btn-cancel"><i class="fas fa-times"></i> Cancel</button>
+                            <button type="button" id="undo-btn" class="btn btn-undo hidden"><i class="fas fa-undo"></i> Undo</button>
+                        </div>
+                    </form>
+                    <div id="help-overlay" class="help-overlay hidden">
+                        <h4>How to Add a Dish</h4>
+                        <p>1. Enter the dish name (e.g., "Jollof Rice").</p>
+                        <p>2. Add the base price in GH₵ (e.g., 25.00).</p>
+                        <p>3. Click "Add Size" or "Add Extra" to include options like "Large" or "Extra Cheese".</p>
+                        <p>4. Click "Save" to finish, or "Cancel" to start over.</p>
+                        <p>Need more help? <a href="https://wa.me/233509330098" class="text-blue-400">Contact support</a>.</p>
+                        <button class="btn btn-close-help" id="btn-close-help">Close</button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div id="view-orders" class="section hidden">
@@ -699,7 +1028,6 @@
         const db = getFirestore(app);
         const auth = getAuth(app);
         let restaurantId = null;
-        let selectedMenuId = null;
 
         const loadingScreen = document.getElementById("loading-screen");
         const loginSection = document.getElementById("login-section");
@@ -818,109 +1146,345 @@
         async function loadMenu() {
             if (!restaurantId) return;
             menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
-            const menuRef = collection(db, "restaurant", restaurantId, "menu");
-            const querySnapshot = await getDocs(menuRef);
-            const fragment = document.createDocumentFragment();
-            querySnapshot.forEach(docSnapshot => {
-                const data = docSnapshot.data();
-                const item = document.createElement("div");
-                item.className = "menu-item";
-                item.dataset.id = docSnapshot.id;
-                item.innerHTML = `
-                    <h4>${data.name}</h4>
-                    <p>Price: GH₵${data.price.toFixed(2)}</p>
-                    <div id="details-${docSnapshot.id}" class="menu-details hidden"></div>
-                    <div id="edit-${docSnapshot.id}" class="details hidden"></div>
-                `;
-                item.addEventListener("click", (e) => {
-                    if (!e.target.closest("button")) showMenuDetails(docSnapshot.id);
+            try {
+                const menuRef = collection(db, "restaurant", restaurantId, "menu");
+                const querySnapshot = await getDocs(menuRef);
+                menuList.innerHTML = "";
+                if (querySnapshot.empty) {
+                    menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
+                    return;
+                }
+                querySnapshot.forEach(docSnapshot => {
+                    const data = docSnapshot.data();
+                    const item = document.createElement("div");
+                    item.className = "menu-item";
+                    const hasOptions = (data.sizes?.length > 0) || (data.extras?.length > 0);
+                    item.innerHTML = `
+                        <h4>${data.name}</h4>
+                        <p>Base Price: GH₵${data.price.toFixed(2)}</p>
+                        ${hasOptions ? `
+                            <div class="options-toggle">Show Options</div>
+                            <div class="options-details">
+                                ${data.sizes?.length ? `<p><strong>Sizes:</strong> ${data.sizes.map(s => `${s.name} (+GH₵${s.price.toFixed(2)})`).join(", ")}</p>` : ""}
+                                ${data.extras?.length ? `<p><strong>Extras:</strong> ${data.extras.map(e => `${e.name} (+GH₵${e.price.toFixed(2)})`).join(", ")}</p>` : ""}
+                            </div>
+                        ` : ""}
+                        <div class="menu-item-actions">
+                            <button class="btn btn-edit edit-dish-btn" data-id="${docSnapshot.id}">Edit</button>
+                            <button class="btn btn-secondary delete-dish-btn" data-id="${docSnapshot.id}">Delete</button>
+                        </div>
+                    `;
+                    menuList.appendChild(item);
+                    if (hasOptions) {
+                        const toggle = item.querySelector(".options-toggle");
+                        const details = item.querySelector(".options-details");
+                        toggle.addEventListener("click", () => {
+                            details.classList.toggle("show");
+                            toggle.textContent = details.classList.contains("show") ? "Hide Options" : "Show Options";
+                        });
+                    }
                 });
-                fragment.appendChild(item);
-            });
-            menuList.innerHTML = "";
-            menuList.appendChild(fragment);
-            if (!querySnapshot.size) menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet.</p>";
+
+                document.querySelectorAll(".edit-dish-btn").forEach(btn => {
+                    btn.addEventListener("click", () => openEditModal(btn.dataset.id));
+                });
+                document.querySelectorAll(".delete-dish-btn").forEach(btn => {
+                    btn.addEventListener("click", () => deleteMenuItem(btn.dataset.id));
+                });
+            } catch (error) {
+                console.error("Error loading menu:", error);
+                menuList.innerHTML = "<p class='text-gray-400'>Error loading menu. Please try again.</p>";
+                showNotification("Failed to load menu.", "error");
+            }
         }
 
-        async function showMenuDetails(menuId) {
-            if (selectedMenuId === menuId && !document.getElementById(`details-${menuId}`).classList.contains("hidden")) {
-                document.getElementById(`details-${menuId}`).classList.remove("hidden");
+        // Modal state
+        let lastDeletedOption = null;
+        let hasUnsavedChanges = false;
+
+        // Open modal for adding a dish
+        function openAddModal() {
+            const modal = document.getElementById("menu-modal");
+            const title = document.getElementById("modal-title");
+            const form = document.getElementById("menu-form");
+            const nameInput = document.getElementById("menu-name");
+            const priceInput = document.getElementById("menu-price");
+            const sizeList = document.getElementById("size-list");
+            const extraList = document.getElementById("extra-list");
+            const undoBtn = document.getElementById("undo-btn");
+
+            title.textContent = "Add Dish";
+            form.reset();
+            sizeList.innerHTML = "";
+            extraList.innerHTML = "";
+            form.dataset.mode = "add";
+            delete form.dataset.id;
+            modal.classList.add("show");
+            nameInput.focus();
+            undoBtn.classList.add("hidden");
+            hasUnsavedChanges = false;
+            clearErrors();
+        }
+
+        // Open modal for editing a dish
+        async function openEditModal(menuId) {
+            try {
+                const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const modal = document.getElementById("menu-modal");
+                    const title = document.getElementById("modal-title");
+                    const form = document.getElementById("menu-form");
+                    const nameInput = document.getElementById("menu-name");
+                    const priceInput = document.getElementById("menu-price");
+                    const sizeList = document.getElementById("size-list");
+                    const extraList = document.getElementById("extra-list");
+                    const undoBtn = document.getElementById("undo-btn");
+
+                    title.textContent = "Edit Dish";
+                    nameInput.value = data.name;
+                    priceInput.value = data.price.toFixed(2);
+                    sizeList.innerHTML = data.sizes?.length
+                        ? data.sizes.map((size, index) => `
+                            <div class="option-item" data-index="${index}">
+                                <p>${size.name} (GH₵${size.price.toFixed(2)})</p>
+                                <button type="button" class="btn btn-cancel delete-option-btn" data-type="size" data-index="${index}"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join("")
+                        : "";
+                    extraList.innerHTML = data.extras?.length
+                        ? data.extras.map((extra, index) => `
+                            <div class="option-item" data-index="${index}">
+                                <p>${extra.name} (GH₵${extra.price.toFixed(2)})</p>
+                                <button type="button" class="btn btn-cancel delete-option-btn" data-type="extra" data-index="${index}"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `).join("")
+                        : "";
+                    form.dataset.mode = "edit";
+                    form.dataset.id = menuId;
+                    modal.classList.add("show");
+                    nameInput.focus();
+                    undoBtn.classList.add("hidden");
+                    hasUnsavedChanges = false;
+                    clearErrors();
+                    attachOptionDeleteListeners();
+                } else {
+                    showNotification("Dish not found.", "error");
+                }
+            } catch (error) {
+                console.error("Error opening edit modal:", error);
+                showNotification("Failed to load dish details.", "error");
+            }
+        }
+
+        // Close modal
+        function closeModal() {
+            if (hasUnsavedChanges && !confirm("You have unsaved changes. Close anyway?")) {
                 return;
             }
-            selectedMenuId = menuId;
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const data = docSnap.data();
-            const sizes = data.sizes || [];
-            const extras = data.extras || [];
-            const detailsDiv = document.getElementById(`details-${menuId}`);
-            detailsDiv.innerHTML = `
-                <p>Sizes: ${sizes.length ? sizes.map(s => `${s.name} (GH₵${s.price.toFixed(2)})`).join(", ") : "None"}</p>
-                <p>Extras: ${extras.length ? extras.map(e => `${e.name} (GH₵${e.price.toFixed(2)})`).join(", ") : "None"}</p>
-                <div class="flex gap-2 mt-2 justify-center flex-wrap">
-                    <button class="btn btn-edit" data-menu-id="${menuId}">Edit</button>
-                    <button class="btn btn-secondary delete-menu-btn" data-menu-id="${menuId}">Delete</button>
-                </div>
-            `;
-            detailsDiv.classList.remove("hidden");
-            document.querySelectorAll(".menu-item").forEach(item => {
-                if (item.dataset.id !== menuId) {
-                    document.getElementById(`details-${item.dataset.id}`).classList.add("hidden");
-                    document.getElementById(`edit-${item.dataset.id}`).classList.add("hidden");
-                }
-            });
-            detailsDiv.querySelector(".btn-edit").addEventListener("click", () => showEditMenu(menuId));
-            detailsDiv.querySelector(".delete-menu-btn").addEventListener("click", () => deleteMenuItem(menuId));
+            const modal = document.getElementById("menu-modal");
+            modal.classList.remove("show");
+            hasUnsavedChanges = false;
         }
 
-        async function showEditMenu(menuId) {
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const data = docSnap.data();
-            const sizes = data.sizes || [];
-            const extras = data.extras || [];
-            const editDiv = document.getElementById(`edit-${menuId}`);
-            editDiv.innerHTML = `
-                <label class="form-label">Name</label>
-                <input type="text" id="name-${menuId}" value="${data.name}" class="input">
-                <label class="form-label">Price (GH₵)</label>
-                <input type="number" id="price-${menuId}" value="${data.price}" step="0.01" class="input">
-                <h5 class="text-sm font-semibold mt-2">Sizes</h5>
-                ${sizes.map((size, index) => `
-                    <div class="variation" data-size-index="${index}">
-                        <input type="text" value="${size.name}" id="size-name-${menuId}-${index}" class="input">
-                        <input type="number" value="${size.price}" step="0.01" id="size-price-${menuId}-${index}" class="input input-price">
-                        <button class="btn btn-secondary delete-size-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
-                    </div>
-                `).join("") || "<p class='text-gray-400'>No sizes added</p>"}
-                <div class="variation">
-                    <input type="text" placeholder="Add size" id="new-size-name-${menuId}" class="input">
-                    <input type="number" placeholder="Price" step="0.01" id="new-size-price-${menuId}" class="input input-price">
-                    <button class="btn add-size-btn" data-menu-id="${menuId}">Add</button>
-                </div>
-                <h5 class="text-sm font-semibold mt-2">Extras</h5>
-                ${extras.map((extra, index) => `
-                    <div class="variation" data-extra-index="${index}">
-                        <input type="text" value="${extra.name}" id="extra-name-${menuId}-${index}" class="input">
-                        <input type="number" value="${extra.price}" step="0.01" id="extra-price-${menuId}-${index}" class="input input-price">
-                        <button class="btn btn-secondary delete-extra-btn" data-menu-id="${menuId}" data-index="${index}">Delete</button>
-                    </div>
-                `).join("") || "<p class='text-gray-400'>No extras added</p>"}
-                <div class="variation">
-                    <input type="text" placeholder="Add extra" id="new-extra-name-${menuId}" class="input">
-                    <input type="number" placeholder="Price" step="0.01" id="new-extra-price-${menuId}" class="input input-price">
-                    <button class="btn add-extra-btn" data-menu-id="${menuId}">Add</button>
-                </div>
-                <button class="btn w-full mt-2 save-menu-btn" data-menu-id="${menuId}">Save Changes</button>
-            `;
-            editDiv.classList.remove("hidden");
-            document.getElementById(`details-${menuId}`).classList.add("hidden");
-            editDiv.querySelectorAll(".delete-size-btn").forEach(btn => btn.addEventListener("click", () => deleteSize(btn.dataset.menuId, btn.dataset.index)));
-            editDiv.querySelectorAll(".delete-extra-btn").forEach(btn => btn.addEventListener("click", () => deleteExtra(btn.dataset.menuId, btn.dataset.index)));
-            editDiv.querySelector(".add-size-btn").addEventListener("click", () => addSize(menuId));
-            editDiv.querySelector(".add-extra-btn").addEventListener("click", () => addExtra(menuId));
-            editDiv.querySelector(".save-menu-btn").addEventListener("click", () => saveMenuItem(menuId));
+        // Clear error messages
+        function clearErrors() {
+            document.querySelectorAll(".error-message").forEach(el => {
+                el.textContent = "";
+                el.classList.remove("show");
+            });
         }
+
+        // Validate form
+        function validateForm(name, price) {
+            clearErrors();
+            let isValid = true;
+            if (!name.trim()) {
+                document.getElementById("menu-name-error").textContent = "Please enter a dish name.";
+                document.getElementById("menu-name-error").classList.add("show");
+                isValid = false;
+            }
+            if (!price || price < 0 || isNaN(price)) {
+                document.getElementById("menu-price-error").textContent = "Please enter a valid price (e.g., 25.00).";
+                document.getElementById("menu-price-error").classList.add("show");
+                isValid = false;
+            }
+            return isValid;
+        }
+
+        // Add option (size or extra)
+        function addOption(type, name, price) {
+            const list = document.getElementById(`${type}-list`);
+            const index = list.querySelectorAll(".option-item").length;
+            list.insertAdjacentHTML("beforeend", `
+                <div class="option-item" data-index="${index}">
+                    <p>${name} (GH₵${price.toFixed(2)})</p>
+                    <button type="button" class="btn btn-cancel delete-option-btn" data-type="${type}" data-index="${index}"><i class="fas fa-trash"></i></button>
+                </div>
+            `);
+            hasUnsavedChanges = true;
+            attachOptionDeleteListeners();
+        }
+
+        // Delete option with undo
+        function deleteOption(btn) {
+            const index = parseInt(btn.dataset.index);
+            const type = btn.dataset.type;
+            const list = document.getElementById(`${type}-list`);
+            const item = list.querySelector(`.option-item[data-index="${index}"]`);
+            if (!item) return;
+
+            lastDeletedOption = {
+                type,
+                index,
+                name: item.querySelector("p").textContent.split(" (")[0],
+                price: parseFloat(item.querySelector("p").textContent.match(/GH₵([\d.]+)/)[1]),
+            };
+            item.remove();
+            document.getElementById("undo-btn").classList.remove("hidden");
+            hasUnsavedChanges = true;
+        }
+
+        // Undo last deletion
+        function undoDelete() {
+            if (!lastDeletedOption) return;
+            addOption(lastDeletedOption.type, lastDeletedOption.name, lastDeletedOption.price);
+            document.getElementById("undo-btn").classList.add("hidden");
+            lastDeletedOption = null;
+        }
+
+        // Attach delete listeners
+        function attachOptionDeleteListeners() {
+            document.querySelectorAll(".delete-option-btn").forEach(btn => {
+                btn.removeEventListener("click", handleDeleteOption); // Prevent duplicates
+                btn.addEventListener("click", handleDeleteOption);
+            });
+        }
+
+        function handleDeleteOption(e) {
+            if (confirm("Delete this option?")) {
+                deleteOption(e.target.closest("button"));
+            }
+        }
+
+        // Toggle option group
+        function toggleOptionGroup(btn) {
+            const list = document.getElementById(btn.getAttribute("aria-controls"));
+            const isExpanded = btn.getAttribute("aria-expanded") === "true";
+            btn.setAttribute("aria-expanded", !isExpanded);
+            list.classList.toggle("hidden");
+        }
+
+        // Show help overlay
+        function showHelp() {
+            document.getElementById("help-overlay").classList.remove("hidden");
+        }
+
+        // Hide help overlay
+        function hideHelp() {
+            document.getElementById("help-overlay").classList.add("hidden");
+        }
+
+        // Delete menu item
+        async function deleteMenuItem(menuId) {
+            if (!confirm("Are you sure you want to delete this dish? This cannot be undone.")) return;
+            try {
+                await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
+                showNotification("Dish deleted successfully!", "success");
+                loadMenu();
+            } catch (error) {
+                console.error("Error deleting dish:", error);
+                showNotification("Failed to delete dish.", "error");
+            }
+        }
+
+        // Event listeners for modal
+        document.getElementById("add-dish-btn").addEventListener("click", openAddModal);
+
+        document.getElementById("cancel-dish-btn").addEventListener("click", closeModal);
+
+        document.getElementById("undo-btn").addEventListener("click", undoDelete);
+
+        document.getElementById("add-size-btn").addEventListener("click", () => {
+            const name = prompt("Enter size name (e.g., Large):");
+            if (!name) return;
+            const price = prompt("Enter extra price for this size (e.g., 5.00):");
+            const parsedPrice = parseFloat(price);
+            if (isNaN(parsedPrice) || parsedPrice < 0) {
+                showNotification("Please enter a valid price.", "error");
+                return;
+            }
+            addOption("size", name.trim(), parsedPrice);
+        });
+
+        document.getElementById("add-extra-btn").addEventListener("click", () => {
+            const name = prompt("Enter extra name (e.g., Extra Cheese):");
+            if (!name) return;
+            const price = prompt("Enter price for this extra (e.g., 2.00):");
+            const parsedPrice = parseFloat(price);
+            if (isNaN(parsedPrice) || parsedPrice < 0) {
+                showNotification("Please enter a valid price.", "error");
+                return;
+            }
+            addOption("extra", name.trim(), parsedPrice);
+        });
+
+        document.getElementById("menu-form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("menu-name").value.trim();
+            const price = parseFloat(document.getElementById("menu-price").value);
+            const form = document.getElementById("menu-form");
+            const mode = form.dataset.mode;
+            const sizeList = document.getElementById("size-list");
+            const extraList = document.getElementById("extra-list");
+
+            if (!validateForm(name, price)) return;
+
+            const sizes = Array.from(sizeList.querySelectorAll(".option-item")).map(item => {
+                const text = item.querySelector("p").textContent;
+                return {
+                    name: text.split(" (")[0],
+                    price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
+                };
+            });
+            const extras = Array.from(extraList.querySelectorAll(".option-item")).map(item => {
+                const text = item.querySelector("p").textContent;
+                return {
+                    name: text.split(" (")[0],
+                    price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
+                };
+            });
+
+            try {
+                if (mode === "add") {
+                    await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras });
+                    showNotification("Dish added successfully!", "success");
+                } else if (mode === "edit") {
+                    const menuId = form.dataset.id;
+                    await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras });
+                    showNotification("Dish updated successfully!", "success");
+                }
+                closeModal();
+                loadMenu();
+            } catch (error) {
+                console.error(`Error ${mode === "add" ? "adding" : "updating"} dish:`, error);
+                showNotification(`Failed to ${mode === "add" ? "add" : "update"} dish.`, "error");
+            }
+        });
+
+        document.querySelectorAll(".toggle-btn").forEach(btn => {
+            btn.addEventListener("click", () => toggleOptionGroup(btn));
+        });
+
+        document.getElementById("help-btn").addEventListener("click", showHelp);
+
+        document.getElementById("btn-close-help").addEventListener("click", hideHelp);
+
+        // Track changes
+        document.getElementById("menu-form").addEventListener("input", () => {
+            hasUnsavedChanges = true;
+        });
 
         function loadOrders() {
             if (!restaurantId) return;
@@ -940,16 +1504,15 @@
                     item.innerHTML = `
                         <div class="order-summary cursor-pointer">
                             <p class="font-bold text-lg text-white">Items: ${items}</p>
-                             <p class="font-bold text-lg text-white">Location: ${deliveryDetails.location || "Not provided"}</p>
+                            <p class="font-bold text-lg text-white">Location: ${deliveryDetails.location || "Not provided"}</p>
                             <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                         <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
-                            </div>
+                            <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+                        </div>
                         <div class="order-details hidden mt-2">
                             <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
                             <p><strong>Order ID:</strong> ${order.id}</p>
                             <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
                             <p><strong>Note:</strong> ${order.note || "None"}</p>
-                           
                         </div>
                     `;
                     item.querySelector(".order-summary").addEventListener("click", () => {
@@ -1022,8 +1585,6 @@
             loadRestaurantData();
         });
 
-        
-
         document.getElementById("open-shop-btn").addEventListener("click", async () => {
             await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
             showNotification("Shop opened!");
@@ -1035,95 +1596,6 @@
             showNotification("Shop closed!");
             loadRestaurantData();
         });
-
-        async function deleteMenuItem(menuId) {
-            if (!confirm("Are you sure you want to delete this dish? This action cannot be undone.")) return;
-            await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
-            showNotification("Dish deleted!", "error");
-            loadMenu();
-        }
-
-        document.getElementById("menu-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("menu-name").value;
-            const price = parseFloat(document.getElementById("menu-price").value);
-            if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
-            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes: [], extras: [] });
-            showNotification("Dish added!");
-            document.getElementById("menu-name").value = "";
-            document.getElementById("menu-price").value = "";
-            loadMenu();
-        });
-
-        async function addSize(menuId) {
-            const name = document.getElementById(`new-size-name-${menuId}`).value;
-            const price = parseFloat(document.getElementById(`new-size-price-${menuId}`).value);
-            if (!name || isNaN(price)) return showNotification("Enter size name and price!", "error");
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const sizes = docSnap.data().sizes || [];
-            sizes.push({ name, price });
-            await updateDoc(docRef, { sizes });
-            showNotification("Size added!");
-            showEditMenu(menuId);
-        }
-
-        async function addExtra(menuId) {
-            const name = document.getElementById(`new-extra-name-${menuId}`).value;
-            const price = parseFloat(document.getElementById(`new-extra-price-${menuId}`).value);
-            if (!name || isNaN(price)) return showNotification("Enter extra name and price!", "error");
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const extras = docSnap.data().extras || [];
-            extras.push({ name, price });
-            await updateDoc(docRef, { extras });
-            showNotification("Extra added!");
-            showEditMenu(menuId);
-        }
-
-        async function deleteSize(menuId, index) {
-            if (!confirm("Are you sure you want to delete this size?")) return;
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const sizes = docSnap.data().sizes || [];
-            sizes.splice(index, 1);
-            await updateDoc(docRef, { sizes });
-            showNotification("Size deleted!", "error");
-            showEditMenu(menuId);
-        }
-
-        async function deleteExtra(menuId, index) {
-            if (!confirm("Are you sure you want to delete this extra?")) return;
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const extras = docSnap.data().extras || [];
-            extras.splice(index, 1);
-            await updateDoc(docRef, { extras });
-            showNotification("Extra deleted!", "error");
-            showEditMenu(menuId);
-        }
-
-        async function saveMenuItem(menuId) {
-            const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-            const docSnap = await getDoc(docRef);
-            const data = docSnap.data();
-            const name = document.getElementById(`name-${menuId}`).value;
-            const price = parseFloat(document.getElementById(`price-${menuId}`).value);
-            const sizes = data.sizes || [];
-            const extras = data.extras || [];
-            const updatedSizes = sizes.map((_, index) => ({
-                name: document.getElementById(`size-name-${menuId}-${index}`).value,
-                price: parseFloat(document.getElementById(`size-price-${menuId}-${index}`).value)
-            }));
-            const updatedExtras = extras.map((_, index) => ({
-                name: document.getElementById(`extra-name-${menuId}-${index}`).value,
-                price: parseFloat(document.getElementById(`extra-price-${menuId}-${index}`).value)
-            }));
-            if (!name || isNaN(price)) return showNotification("Please enter a name and price!", "error");
-            await updateDoc(docRef, { name, price, sizes: updatedSizes, extras: updatedExtras });
-            showNotification("Changes saved!");
-            loadMenu();
-        }
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -1332,6 +1804,5 @@
             }
         });
     </script>
-    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92ea6f3ecf65dd1a',t:'MTc0NDM3Mzk5MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
 </body>
 </html>
