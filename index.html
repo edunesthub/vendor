@@ -1278,15 +1278,13 @@
             }
         }
 
-        // Close modal
-        function closeModal() {
-            if (hasUnsavedChanges && !confirm("You have unsaved changes. Close anyway?")) {
-                return;
-            }
-            const modal = document.getElementById("menu-modal");
-            modal.classList.remove("show");
-            hasUnsavedChanges = false;
-        }
+        // Close modal instantly, no prompt
+function closeModal() {
+    const modal = document.getElementById("menu-modal");
+    modal.classList.remove("show");
+    hasUnsavedChanges = false;
+}
+
 
         // Clear error messages
         function clearErrors() {
