@@ -561,7 +561,7 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
+            height: 70%;
             background: rgba(0, 0, 0, 0.8);
             display: flex;
             align-items: center;
@@ -1083,13 +1083,18 @@
             const todayTimestamp = today.getTime();
             let activeDeliveries = 0;
             let completedToday = 0;
+            let totalOrdersToday = 0;
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
             onSnapshot(q, (snapshot) => {
                 activeDeliveries = 0;
                 completedToday = 0;
+                totalOrdersToday = 0;
                 snapshot.forEach(doc => {
                     const order = doc.data();
                     const timestamp = new Date(order.timestamp).getTime();
+                    if (timestamp >= todayTimestamp) {
+                        totalOrdersToday++;
+                    }
                     if (order.status === "delivered" && timestamp >= todayTimestamp) {
                         completedToday++;
                     }
@@ -1098,18 +1103,21 @@
                     }
                 });
                 const totalAmountToday = snapshot.docs
-                    .filter(doc => {
-                        const order = doc.data();
-                        const timestamp = new Date(order.timestamp).getTime();
-                        return order.status === "delivered" && timestamp >= todayTimestamp;
-                    })
-                    .reduce((sum, doc) => {
-                        const order = doc.data();
-                        return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
-                    }, 0);
+            .filter(doc => {
+                const order = doc.data();
+                return new Date(order.timestamp).getTime() >= todayTimestamp;
+           })
+            .reduce((sum, doc) => {
+                const order = doc.data();
+                return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
+        }, 0);
                 dashboardGrid.innerHTML = `
                     <div class="dashboard-card">
                         <h3>Today's Orders</h3>
+                        <p>${totalOrdersToday}</p>
+                    </div>
+                    <div class="dashboard-card">
+                        <h3>Completed Orders</h3>
                         <p>${completedToday}</p>
                     </div>
                     <div class="dashboard-card">
@@ -1802,5 +1810,5 @@ function closeModal() {
             }
         });
     </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92f2cd898b7b1d74',t:'MTc0NDQ2MTczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

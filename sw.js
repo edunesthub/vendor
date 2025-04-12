@@ -1,139 +1,82 @@
-const CACHE_NAME = "vendor-portal-cache-v11"; // Updated cache version
+const CACHE_NAME = "vendor-portal-cache-v14";
 const urlsToCache = [
-    "/",
-    "/index.html",
-    "index.html",
-    "manifest.json",
-    "https://cdn.tailwindcss.com",
-    "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js",
-    "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js",
-    "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js",
-    "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
-    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
-    "icons/icon-192x192.png",
-    "icons/icon-512x512.png"
+  "/",
+  "/index.html",
+  "/manifest.json",
+  "https://cdn.tailwindcss.com",
+  "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js",
+  "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js",
+  "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js",
+  "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
+  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
+  "/img/icon-192x192.png",
 ];
 
-// Install event - Cache essential files
-self.addEventListener("install", event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log("Caching vendor portal files");
-                return Promise.all(
-                    urlsToCache.map(url => {
-                        return cache.add(url).catch(err => {
-                            console.warn(`Failed to cache ${url}: ${err}`);
-                        });
-                    })
-                );
-            })
-            .then(() => self.skipWaiting())
-            .catch(err => console.error("Installation failed:", err))
-    );
+// Install event: Cache essential files
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log("Caching assets");
+      return cache.addAll(urlsToCache);
+    }).then(() => self.skipWaiting())
+  );
 });
 
-// Activate event - Clean up old caches
-self.addEventListener("activate", event => {
-    const cacheWhitelist = [CACHE_NAME];
-    event.waitUntil(
-        caches.keys()
-            .then(cacheNames => {
-                return Promise.all(
-                    cacheNames.map(cacheName => {
-                        if (!cacheWhitelist.includes(cacheName)) {
-                            console.log("Deleting old cache:", cacheName);
-                            return caches.delete(cacheName);
-                        }
-                    })
-                );
-            })
-            .then(() => self.clients.claim())
-            .catch(err => console.error("Activation failed:", err))
-    );
-});
-
-// Fetch event - Cache-first strategy with network fallback
-self.addEventListener("fetch", event => {
-    const request = event.request;
-
-    // Skip non-GET requests and requests to other domains
-    if (request.method !== "GET" || !request.url.startsWith(self.location.origin)) {
-        return;
-    }
-
-    // Serve app shell immediately for navigation requests
-    if (request.mode === 'navigate') {
-        event.respondWith(
-            caches.match('/index.html')
-                .then(cachedResponse => {
-                    const networkFetch = fetch(request).catch(() => cachedResponse);
-                    event.waitUntil(updateCache(request)); // Update cache in background
-                    return cachedResponse || networkFetch;
-                })
-        );
-        return;
-    }
-
-    // Standard cache strategy for other resources
-    event.respondWith(
-        caches.match(request)
-            .then(cachedResponse => {
-                // Return cached response if available
-                if (cachedResponse) {
-                    // Update cache in background for non-static assets
-                    if (!request.url.includes('/icons/')) {
-                        event.waitUntil(updateCache(request));
-                    }
-                    return cachedResponse;
-                }
-
-                // Fetch from network if not cached
-                return fetch(request)
-                    .then(networkResponse => {
-                        const responseToCache = networkResponse.clone();
-                        if (networkResponse && networkResponse.status === 200) {
-                            caches.open(CACHE_NAME)
-                                .then(cache => cache.put(request, responseToCache))
-                                .catch(err => console.warn("Cache update failed:", err));
-                        }
-                        return networkResponse;
-                    })
-                    .catch(err => {
-                        console.warn("Fetch failed:", err);
-                        if (request.mode === "navigate") {
-                            return caches.match("index.html")
-                                .then(fallback => fallback || Promise.reject("No fallback available"));
-                        }
-                        return Promise.reject("Network and cache unavailable");
-                    });
-            })
-    );
-});
-
-// Helper function to update cache in background
-function updateCache(request) {
-    return fetch(request)
-        .then(networkResponse => {
-            if (networkResponse && networkResponse.status === 200) {
-                return caches.open(CACHE_NAME)
-                    .then(cache => {
-                        cache.put(request, networkResponse.clone());
-                    });
-            }
+// Activate event: Clean up old caches
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log("Deleting old cache:", cache);
+            return caches.delete(cache);
+          }
         })
-        .catch(err => console.warn("Background update failed:", err));
-}
+      );
+    }).then(() => self.clients.claim())
+  );
+});
 
-// OneSignal integration (if needed)
-self.addEventListener('push', function(event) {
-    const options = {
-        body: event.data.text(),
-        icon: 'icons/icon-192x192.png',
-        badge: 'icons/icon-512x512.png'
-    };
+// Fetch event: Serve cached content or fetch from network
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return response || fetch(event.request).catch(() => {
+        return caches.match("/index.html");
+      });
+    })
+  );
+});
 
-    event.waitUntil(
-        self.registration.showNotification('New Notification', options)
-    );
+// Push event: Handle push notifications
+self.addEventListener("push", (event) => {
+  const data = event.data.json();
+  const title = data.title || "Chawp Vendor Portal";
+  const options = {
+    body: data.body || "New update available!",
+    icon: "/img/icon-192x192.png",
+    badge: "/img/icon-192x192.png",
+    vibrate: [200, 100, 200],
+    tag: data.tag || "chawp-notification",
+    renotify: true,
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+// Notification click event: Focus or open the portal
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if (client.url.includes("index.html") && "focus" in client) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow("/");
+      }
+    })
+  );
 });
