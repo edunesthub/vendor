@@ -1103,14 +1103,14 @@
                     }
                 });
                 const totalAmountToday = snapshot.docs
-            .filter(doc => {
-                const order = doc.data();
-                return new Date(order.timestamp).getTime() >= todayTimestamp;
-           })
-            .reduce((sum, doc) => {
-                const order = doc.data();
-                return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
-        }, 0);
+                    .filter(doc => {
+                        const order = doc.data();
+                        return new Date(order.timestamp).getTime() >= todayTimestamp;
+                    })
+                    .reduce((sum, doc) => {
+                        const order = doc.data();
+                        return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
+                    }, 0);
                 dashboardGrid.innerHTML = `
                     <div class="dashboard-card">
                         <h3>Today's Orders</h3>
@@ -1210,7 +1210,6 @@
         let lastDeletedOption = null;
         let hasUnsavedChanges = false;
 
-        // Open modal for adding a dish
         function openAddModal() {
             const modal = document.getElementById("menu-modal");
             const title = document.getElementById("modal-title");
@@ -1234,7 +1233,6 @@
             clearErrors();
         }
 
-        // Open modal for editing a dish
         async function openEditModal(menuId) {
             try {
                 const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
@@ -1286,15 +1284,12 @@
             }
         }
 
-        // Close modal instantly, no prompt
-function closeModal() {
-    const modal = document.getElementById("menu-modal");
-    modal.classList.remove("show");
-    hasUnsavedChanges = false;
-}
+        function closeModal() {
+            const modal = document.getElementById("menu-modal");
+            modal.classList.remove("show");
+            hasUnsavedChanges = false;
+        }
 
-
-        // Clear error messages
         function clearErrors() {
             document.querySelectorAll(".error-message").forEach(el => {
                 el.textContent = "";
@@ -1302,7 +1297,6 @@ function closeModal() {
             });
         }
 
-        // Validate form
         function validateForm(name, price) {
             clearErrors();
             let isValid = true;
@@ -1319,7 +1313,6 @@ function closeModal() {
             return isValid;
         }
 
-        // Add option (size or extra)
         function addOption(type, name, price) {
             const list = document.getElementById(`${type}-list`);
             const index = list.querySelectorAll(".option-item").length;
@@ -1333,7 +1326,6 @@ function closeModal() {
             attachOptionDeleteListeners();
         }
 
-        // Delete option with undo
         function deleteOption(btn) {
             const index = parseInt(btn.dataset.index);
             const type = btn.dataset.type;
@@ -1352,7 +1344,6 @@ function closeModal() {
             hasUnsavedChanges = true;
         }
 
-        // Undo last deletion
         function undoDelete() {
             if (!lastDeletedOption) return;
             addOption(lastDeletedOption.type, lastDeletedOption.name, lastDeletedOption.price);
@@ -1360,10 +1351,9 @@ function closeModal() {
             lastDeletedOption = null;
         }
 
-        // Attach delete listeners
         function attachOptionDeleteListeners() {
             document.querySelectorAll(".delete-option-btn").forEach(btn => {
-                btn.removeEventListener("click", handleDeleteOption); // Prevent duplicates
+                btn.removeEventListener("click", handleDeleteOption);
                 btn.addEventListener("click", handleDeleteOption);
             });
         }
@@ -1374,7 +1364,6 @@ function closeModal() {
             }
         }
 
-        // Toggle option group
         function toggleOptionGroup(btn) {
             const list = document.getElementById(btn.getAttribute("aria-controls"));
             const isExpanded = btn.getAttribute("aria-expanded") === "true";
@@ -1382,17 +1371,14 @@ function closeModal() {
             list.classList.toggle("hidden");
         }
 
-        // Show help overlay
         function showHelp() {
             document.getElementById("help-overlay").classList.remove("hidden");
         }
 
-        // Hide help overlay
         function hideHelp() {
             document.getElementById("help-overlay").classList.add("hidden");
         }
 
-        // Delete menu item
         async function deleteMenuItem(menuId) {
             if (!confirm("Are you sure you want to delete this dish? This cannot be undone.")) return;
             try {
@@ -1405,13 +1391,9 @@ function closeModal() {
             }
         }
 
-        // Event listeners for modal
         document.getElementById("add-dish-btn").addEventListener("click", openAddModal);
-
         document.getElementById("cancel-dish-btn").addEventListener("click", closeModal);
-
         document.getElementById("undo-btn").addEventListener("click", undoDelete);
-
         document.getElementById("add-size-btn").addEventListener("click", () => {
             const name = prompt("Enter size name (e.g., Large):");
             if (!name) return;
@@ -1423,7 +1405,6 @@ function closeModal() {
             }
             addOption("size", name.trim(), parsedPrice);
         });
-
         document.getElementById("add-extra-btn").addEventListener("click", () => {
             const name = prompt("Enter extra name (e.g., Extra Cheese):");
             if (!name) return;
@@ -1435,7 +1416,6 @@ function closeModal() {
             }
             addOption("extra", name.trim(), parsedPrice);
         });
-
         document.getElementById("menu-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = document.getElementById("menu-name").value.trim();
@@ -1478,16 +1458,11 @@ function closeModal() {
                 showNotification(`Failed to ${mode === "add" ? "add" : "update"} dish.`, "error");
             }
         });
-
         document.querySelectorAll(".toggle-btn").forEach(btn => {
             btn.addEventListener("click", () => toggleOptionGroup(btn));
         });
-
         document.getElementById("help-btn").addEventListener("click", showHelp);
-
         document.getElementById("btn-close-help").addEventListener("click", hideHelp);
-
-        // Track changes
         document.getElementById("menu-form").addEventListener("input", () => {
             hasUnsavedChanges = true;
         });
@@ -1510,7 +1485,7 @@ function closeModal() {
                     item.innerHTML = `
                         <div class="order-summary cursor-pointer">
                             <p class="font-bold text-lg text-white">Items: ${items}</p>
-                            <p class="font-bold text-lg text-white">Location: ${deliveryDetails.location || "Not provided"}</p>
+                            <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
                             <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
                             <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
                         </div>
@@ -1518,6 +1493,8 @@ function closeModal() {
                             <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
                             <p><strong>Order ID:</strong> ${order.id}</p>
                             <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                            <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
+                            <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
                             <p><strong>Note:</strong> ${order.note || "None"}</p>
                         </div>
                     `;
@@ -1553,14 +1530,16 @@ function closeModal() {
                     item.innerHTML = `
                         <div class="order-summary cursor-pointer">
                             <p class="font-bold text-lg text-white">Items: ${items}</p>
+                            <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
                             <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
                             <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${order.status}</p>
                         </div>
                         <div class="order-details hidden mt-2">
                             <p><strong>Order ID:</strong> ${order.id}</p>
                             <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                            <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
+                            <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
                             <p><strong>Note:</strong> ${order.note || "None"}</p>
-                            <p><strong>Location:</strong> ${deliveryDetails.location || "Not provided"}</p>
                             <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
                             <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
                         </div>
