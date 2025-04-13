@@ -1517,24 +1517,26 @@
             onSnapshot(q, (snapshot) => {
                 const orders = snapshot.docs
                     .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(order => order.status === "delivered" || order.status === "not_delivered")
+                    .filter(order => order.status === "delivered" || order.status === "not_delivered" || order.status === "being_delivered")
                     .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                 const fragment = document.createDocumentFragment();
                 orders.forEach(order => {
                     const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
                     const deliveryDetails = order.deliveryDetails || {};
-                    const statusColor = order.status === "delivered" ? "#34c759" : "#ff3b30";
+                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                    const statusText = order.status === "delivered" ? "Delivered" : order.status === "not_delivered" ? "Not Delivered" : "In Transit";
+                    const statusColor = order.status === "delivered" ? "#34c759" : order.status === "not_delivered" ? "#ff3b30" : "#f59e0b";
                     const item = document.createElement("div");
-                    item.className = "order-item";
+                    item.className = "orders-item";
                     item.innerHTML = `
                         <div class="order-summary cursor-pointer">
                             <p class="font-bold text-lg text-white">Items: ${items}</p>
                             <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
                             <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                            <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${order.status}</p>
+                            <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${statusText}</p>
                         </div>
                         <div class="order-details hidden mt-2">
+                            <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
                             <p><strong>Order ID:</strong> ${order.id}</p>
                             <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
                             <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
@@ -1789,5 +1791,6 @@
             }
         });
     </script>
+    
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92f2cd898b7b1d74',t:'MTc0NDQ2MTczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
