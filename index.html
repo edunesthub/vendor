@@ -1007,30 +1007,30 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-import { 
-    getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-import { 
-    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
-    authDomain: "von600-7982d.firebaseapp.com",
-    projectId: "von600-7982d",
-    storageBucket: "von600-7982d.appspot.com",
-    messagingSenderId: "164591218045",
-    appId: "1:164591218045:web:afe17512e16573e7903014",
-    measurementId: "G-E69DMPLXBK",
-    vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk" // Paste the VAPID public key here
-};
-
+        import { 
+            getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
+        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+        import { 
+            getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js";
+    
+        const firebaseConfig = {
+            apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
+            authDomain: "von600-7982d.firebaseapp.com",
+            projectId: "von600-7982d",
+            storageBucket: "von600-7982d.appspot.com",
+            messagingSenderId: "164591218045",
+            appId: "1:164591218045:web:afe17512e16573e7903014",
+            measurementId: "G-E69DMPLXBK",
+            vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk"
+        };
+    
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         let restaurantId = null;
-
+    
         const loadingScreen = document.getElementById("loading-screen");
         const loginSection = document.getElementById("login-section");
         const mainContent = document.getElementById("main-content");
@@ -1040,53 +1040,31 @@ const firebaseConfig = {
         const deliveredList = document.getElementById("delivered-list");
         const dashboardGrid = document.getElementById("dashboard-grid");
         const messaging = getMessaging(app);
-
-// Request notification permission and get token
-async function requestNotificationPermission() {
-    try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey });
-            if (token && restaurantId) {
-                // Save token to Firestore under vendor's restaurant
-                await setDoc(doc(db, 'restaurant', restaurantId, 'notificationTokens', token), {
-                    token,
-                    timestamp: new Date()
-                });
-                console.log('FCM Token saved:', token);
+    
+        // Request notification permission and get token
+        async function requestNotificationPermission() {
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey });
+                    if (token && restaurantId) {
+                        await setDoc(doc(db, 'restaurant', restaurantId, 'notificationTokens', token), {
+                            token,
+                            timestamp: new Date()
+                        });
+                        console.log('FCM Token saved:', token);
+                    }
+                }
+            } catch (error) {
+                console.error('Error getting FCM token:', error);
             }
         }
-    } catch (error) {
-        console.error('Error getting FCM token:', error);
-    }
-}
-
-// Call this when vendor logs in
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        const mappingRef = doc(db, "vendorMappings", user.email);
-        const mappingSnap = await getDoc(mappingRef);
-        if (mappingSnap.exists()) {
-            restaurantId = mappingSnap.data().restaurantId;
-            loadingScreen.style.display = "none";
-            loginSection.style.display = "none";
-            mainContent.classList.remove("hidden");
-            // Request notification permission
-            requestNotificationPermission();
-            Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
-        } else {
-            // ... existing code ...
-        }
-    } else {
-        // ... existing code ...
-    }
-});
-
-// Handle foreground messages
-onMessage(messaging, (payload) => {
-    showNotification(payload.notification.body, 'info');
-});
-
+    
+        // Handle foreground messages
+        onMessage(messaging, (payload) => {
+            showNotification(payload.notification.body, 'info');
+        });
+    
         function showNotification(message, type = "success") {
             const notification = document.getElementById("notification");
             if (window.notificationTimer) {
@@ -1112,7 +1090,7 @@ onMessage(messaging, (payload) => {
                 notification.classList.remove("show");
             }, 4000);
         }
-
+    
         function toggleSection(sectionId) {
             const sections = ["store", "manage-menu", "view-orders", "delivered", "settings"];
             sections.forEach(id => {
@@ -1124,7 +1102,7 @@ onMessage(messaging, (payload) => {
                 }
             });
         }
-
+    
         async function loadDashboard() {
             if (!restaurantId) return;
             const today = new Date();
@@ -1183,7 +1161,7 @@ onMessage(messaging, (payload) => {
                 dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
             });
         }
-
+    
         async function loadRestaurantData() {
             if (!restaurantId) return;
             const docRef = doc(db, "restaurant", restaurantId);
@@ -1199,7 +1177,7 @@ onMessage(messaging, (payload) => {
                 document.getElementById("status-text").style.color = isOpen ? "#34c759" : "#ff3b30";
             }
         }
-
+    
         async function loadMenu() {
             if (!restaurantId) return;
             menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
@@ -1241,7 +1219,7 @@ onMessage(messaging, (payload) => {
                         });
                     }
                 });
-
+    
                 document.querySelectorAll(".edit-dish-btn").forEach(btn => {
                     btn.addEventListener("click", () => openEditModal(btn.dataset.id));
                 });
@@ -1254,11 +1232,11 @@ onMessage(messaging, (payload) => {
                 showNotification("Failed to load menu.", "error");
             }
         }
-
+    
         // Modal state
         let lastDeletedOption = null;
         let hasUnsavedChanges = false;
-
+    
         function openAddModal() {
             const modal = document.getElementById("menu-modal");
             const title = document.getElementById("modal-title");
@@ -1268,7 +1246,7 @@ onMessage(messaging, (payload) => {
             const sizeList = document.getElementById("size-list");
             const extraList = document.getElementById("extra-list");
             const undoBtn = document.getElementById("undo-btn");
-
+    
             title.textContent = "Add Dish";
             form.reset();
             sizeList.innerHTML = "";
@@ -1281,7 +1259,7 @@ onMessage(messaging, (payload) => {
             hasUnsavedChanges = false;
             clearErrors();
         }
-
+    
         async function openEditModal(menuId) {
             try {
                 const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
@@ -1296,7 +1274,7 @@ onMessage(messaging, (payload) => {
                     const sizeList = document.getElementById("size-list");
                     const extraList = document.getElementById("extra-list");
                     const undoBtn = document.getElementById("undo-btn");
-
+    
                     title.textContent = "Edit Dish";
                     nameInput.value = data.name;
                     priceInput.value = data.price.toFixed(2);
@@ -1332,20 +1310,20 @@ onMessage(messaging, (payload) => {
                 showNotification("Failed to load dish details.", "error");
             }
         }
-
+    
         function closeModal() {
             const modal = document.getElementById("menu-modal");
             modal.classList.remove("show");
             hasUnsavedChanges = false;
         }
-
+    
         function clearErrors() {
             document.querySelectorAll(".error-message").forEach(el => {
                 el.textContent = "";
                 el.classList.remove("show");
             });
         }
-
+    
         function validateForm(name, price) {
             clearErrors();
             let isValid = true;
@@ -1361,7 +1339,7 @@ onMessage(messaging, (payload) => {
             }
             return isValid;
         }
-
+    
         function addOption(type, name, price) {
             const list = document.getElementById(`${type}-list`);
             const index = list.querySelectorAll(".option-item").length;
@@ -1374,14 +1352,14 @@ onMessage(messaging, (payload) => {
             hasUnsavedChanges = true;
             attachOptionDeleteListeners();
         }
-
+    
         function deleteOption(btn) {
             const index = parseInt(btn.dataset.index);
             const type = btn.dataset.type;
             const list = document.getElementById(`${type}-list`);
             const item = list.querySelector(`.option-item[data-index="${index}"]`);
             if (!item) return;
-
+    
             lastDeletedOption = {
                 type,
                 index,
@@ -1392,42 +1370,42 @@ onMessage(messaging, (payload) => {
             document.getElementById("undo-btn").classList.remove("hidden");
             hasUnsavedChanges = true;
         }
-
+    
         function undoDelete() {
             if (!lastDeletedOption) return;
             addOption(lastDeletedOption.type, lastDeletedOption.name, lastDeletedOption.price);
             document.getElementById("undo-btn").classList.add("hidden");
             lastDeletedOption = null;
         }
-
+    
         function attachOptionDeleteListeners() {
             document.querySelectorAll(".delete-option-btn").forEach(btn => {
                 btn.removeEventListener("click", handleDeleteOption);
                 btn.addEventListener("click", handleDeleteOption);
             });
         }
-
+    
         function handleDeleteOption(e) {
             if (confirm("Delete this option?")) {
                 deleteOption(e.target.closest("button"));
             }
         }
-
+    
         function toggleOptionGroup(btn) {
             const list = document.getElementById(btn.getAttribute("aria-controls"));
             const isExpanded = btn.getAttribute("aria-expanded") === "true";
             btn.setAttribute("aria-expanded", !isExpanded);
             list.classList.toggle("hidden");
         }
-
+    
         function showHelp() {
             document.getElementById("help-overlay").classList.remove("hidden");
         }
-
+    
         function hideHelp() {
             document.getElementById("help-overlay").classList.add("hidden");
         }
-
+    
         async function deleteMenuItem(menuId) {
             if (!confirm("Are you sure you want to delete this dish? This cannot be undone.")) return;
             try {
@@ -1439,7 +1417,28 @@ onMessage(messaging, (payload) => {
                 showNotification("Failed to delete dish.", "error");
             }
         }
-
+    
+        async function markOrderAsBeingDelivered(orderId) {
+            try {
+                // Fetch restaurant name
+                const restaurantRef = doc(db, "restaurant", restaurantId);
+                const restaurantSnap = await getDoc(restaurantRef);
+                const restaurantName = restaurantSnap.exists() ? restaurantSnap.data().name || "Unknown Restaurant" : "Unknown Restaurant";
+    
+                // Update order with status, restaurant details, and timestamp
+                await updateDoc(doc(db, "orders", orderId), {
+                    status: "being_delivered",
+                    restaurantId: restaurantId,
+                    restaurantName: restaurantName,
+                    beingDeliveredTimestamp: new Date().toISOString()
+                });
+                showNotification("Order marked as being delivered!");
+            } catch (error) {
+                console.error("Error marking order as being delivered:", error);
+                showNotification("Failed to update order status.", "error");
+            }
+        }
+    
         document.getElementById("add-dish-btn").addEventListener("click", openAddModal);
         document.getElementById("cancel-dish-btn").addEventListener("click", closeModal);
         document.getElementById("undo-btn").addEventListener("click", undoDelete);
@@ -1473,9 +1472,9 @@ onMessage(messaging, (payload) => {
             const mode = form.dataset.mode;
             const sizeList = document.getElementById("size-list");
             const extraList = document.getElementById("extra-list");
-
+    
             if (!validateForm(name, price)) return;
-
+    
             const sizes = Array.from(sizeList.querySelectorAll(".option-item")).map(item => {
                 const text = item.querySelector("p").textContent;
                 return {
@@ -1490,7 +1489,7 @@ onMessage(messaging, (payload) => {
                     price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
                 };
             });
-
+    
             try {
                 if (mode === "add") {
                     await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras });
@@ -1515,7 +1514,7 @@ onMessage(messaging, (payload) => {
         document.getElementById("menu-form").addEventListener("input", () => {
             hasUnsavedChanges = true;
         });
-
+    
         function loadOrders() {
             if (!restaurantId) return;
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
@@ -1559,7 +1558,7 @@ onMessage(messaging, (payload) => {
                 ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
             });
         }
-
+    
         function loadDeliveredOrders() {
             if (!restaurantId) return;
             const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
@@ -1606,12 +1605,7 @@ onMessage(messaging, (payload) => {
                 if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
             });
         }
-
-        async function markOrderAsBeingDelivered(orderId) {
-            await updateDoc(doc(db, "orders", orderId), { status: "being_delivered" });
-            showNotification("Order marked as being delivered!");
-        }
-
+    
         document.getElementById("store-form").addEventListener("submit", async (e) => {
             e.preventDefault();
             const name = document.getElementById("store-name").value;
@@ -1620,19 +1614,19 @@ onMessage(messaging, (payload) => {
             showNotification("Store updated successfully!");
             loadRestaurantData();
         });
-
+    
         document.getElementById("open-shop-btn").addEventListener("click", async () => {
             await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
             showNotification("Shop opened!");
             loadRestaurantData();
         });
-
+    
         document.getElementById("close-shop-btn").addEventListener("click", async () => {
             await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
             showNotification("Shop closed!");
             loadRestaurantData();
         });
-
+    
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 const mappingRef = doc(db, "vendorMappings", user.email);
@@ -1642,6 +1636,7 @@ onMessage(messaging, (payload) => {
                     loadingScreen.style.display = "none";
                     loginSection.style.display = "none";
                     mainContent.classList.remove("hidden");
+                    requestNotificationPermission();
                     Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
                 } else {
                     signOut(auth);
@@ -1662,7 +1657,7 @@ onMessage(messaging, (payload) => {
                 }, 1000);
             }
         });
-
+    
         document.getElementById("login-form").addEventListener("submit", async function(e) {
             e.preventDefault();
             const emailInput = document.getElementById("email");
@@ -1725,7 +1720,7 @@ onMessage(messaging, (payload) => {
                 loginButton.querySelector("span").textContent = "Sign In";
             }
         });
-
+    
         document.getElementById("toggle-password").addEventListener("click", function() {
             const passwordInput = document.getElementById("password");
             const icon = this.querySelector("i");
@@ -1739,7 +1734,7 @@ onMessage(messaging, (payload) => {
                 icon.classList.add("fa-eye");
             }
         });
-
+    
         function showLoginNotification(message, type = "error") {
             const notification = document.getElementById("login-notification");
             if (!notification) return;
@@ -1766,7 +1761,7 @@ onMessage(messaging, (payload) => {
                 }, 300);
             }, 4000);
         }
-
+    
         function preloadResources() {
             const urls = [
                 "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
@@ -1780,9 +1775,9 @@ onMessage(messaging, (payload) => {
                 document.head.appendChild(link);
             });
         }
-
+    
         preloadResources();
-
+    
         function setupNavigation() {
             const navButtons = [
                 { id: "store-btn", section: "store", load: loadDashboard },
@@ -1801,12 +1796,12 @@ onMessage(messaging, (payload) => {
                 }
             });
         }
-
+    
         document.getElementById("logout-btn").addEventListener("click", async () => {
             await signOut(auth);
             showNotification("Logged out successfully!", "success");
         });
-
+    
         document.getElementById("refresh-app-btn").addEventListener("click", () => {
             if ("caches" in window) {
                 caches.keys().then(names => {
@@ -1816,7 +1811,7 @@ onMessage(messaging, (payload) => {
             location.reload(true);
             showNotification("App refreshed!", "success");
         });
-
+    
         document.addEventListener("DOMContentLoaded", () => {
             setupNavigation();
         });
