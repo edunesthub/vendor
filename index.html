@@ -1007,22 +1007,24 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { 
-            getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
-        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { 
-            getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { 
+    getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { 
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
-            authDomain: "von600-7982d.firebaseapp.com",
-            projectId: "von600-7982d",
-            storageBucket: "von600-7982d.appspot.com",
-            messagingSenderId: "164591218045",
-            appId: "1:164591218045:web:afe17512e16573e7903014",
-            measurementId: "G-E69DMPLXBK"
-        };
+const firebaseConfig = {
+    apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
+    authDomain: "von600-7982d.firebaseapp.com",
+    projectId: "von600-7982d",
+    storageBucket: "von600-7982d.appspot.com",
+    messagingSenderId: "164591218045",
+    appId: "1:164591218045:web:afe17512e16573e7903014",
+    measurementId: "G-E69DMPLXBK",
+    vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk" // Paste the VAPID public key here
+};
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -1037,6 +1039,53 @@
         const ordersList = document.getElementById("orders-list");
         const deliveredList = document.getElementById("delivered-list");
         const dashboardGrid = document.getElementById("dashboard-grid");
+        const messaging = getMessaging(app);
+
+// Request notification permission and get token
+async function requestNotificationPermission() {
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey });
+            if (token && restaurantId) {
+                // Save token to Firestore under vendor's restaurant
+                await setDoc(doc(db, 'restaurant', restaurantId, 'notificationTokens', token), {
+                    token,
+                    timestamp: new Date()
+                });
+                console.log('FCM Token saved:', token);
+            }
+        }
+    } catch (error) {
+        console.error('Error getting FCM token:', error);
+    }
+}
+
+// Call this when vendor logs in
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const mappingRef = doc(db, "vendorMappings", user.email);
+        const mappingSnap = await getDoc(mappingRef);
+        if (mappingSnap.exists()) {
+            restaurantId = mappingSnap.data().restaurantId;
+            loadingScreen.style.display = "none";
+            loginSection.style.display = "none";
+            mainContent.classList.remove("hidden");
+            // Request notification permission
+            requestNotificationPermission();
+            Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
+        } else {
+            // ... existing code ...
+        }
+    } else {
+        // ... existing code ...
+    }
+});
+
+// Handle foreground messages
+onMessage(messaging, (payload) => {
+    showNotification(payload.notification.body, 'info');
+});
 
         function showNotification(message, type = "success") {
             const notification = document.getElementById("notification");

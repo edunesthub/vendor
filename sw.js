@@ -12,6 +12,44 @@ const urlsToCache = [
   "/img/icon-192x192.png",
 ];
 
+// sw.js
+importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js');
+importScripts('https://www.gstatic.com/firebasejs/10.9.0/firebase-messaging.js');
+
+const firebaseConfig = {
+    apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
+    authDomain: "von600-7982d.firebaseapp.com",
+    projectId: "von600-7982d",
+    storageBucket: "von600-7982d.appspot.com",
+    messagingSenderId: "164591218045",
+    appId: "1:164591218045:web:afe17512e16573e7903014",
+    measurementId: "G-E69DMPLXBK",
+    vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+    const notificationTitle = payload.notification.title;
+    const notificationOptions = {
+        body: payload.notification.body,
+        icon: '/img/icon-192x192.png',
+        badge: '/img/icon-192x192.png',
+        vibrate: [200, 100, 200],
+        data: { url: '/' } // Redirect to vendor portal on click
+    };
+
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// Handle notification click
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = event.notification.data.url;
+    event.waitUntil(clients.openWindow(url));
+});
+
 // Install event: Cache essential files
 self.addEventListener("install", (event) => {
   event.waitUntil(
