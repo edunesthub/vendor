@@ -63,7 +63,7 @@
         .container {
             max-width: 48rem;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -72,8 +72,8 @@
         .section {
             background: #252527;
             border-radius: 1.25rem;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 0.5rem 2rem rgba(0, 0, 0, 0.5);
             transition: transform 0.15s ease-out, opacity 0.15s ease-out;
             width: 100%;
@@ -89,10 +89,10 @@
         }
         
         h1 {
-            font-size: clamp(1.75rem, 5vw, 2.5rem);
+            font-size: clamp(1.75rem, 5vw, 2.25rem);
             font-weight: 700;
-            letter-spacing: -1px;
-            margin: 0 0 1rem;
+            letter-spacing: -0.5px;
+            margin: 0 0 1.5rem;
             background: linear-gradient(45deg, #007aff, #34c759, #007aff);
             -webkit-background-clip: text;
             background-clip: text;
@@ -103,13 +103,13 @@
         h2 {
             font-size: clamp(1.25rem, 4vw, 1.5rem);
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
         
         p {
             font-size: clamp(0.9rem, 3vw, 1rem);
             opacity: 0.9;
-            margin: 0 0 1rem;
+            margin: 0 0 1.25rem;
         }
         
         .btn {
@@ -124,7 +124,7 @@
             cursor: pointer;
             width: 100%;
             max-width: 20rem;
-            margin: 0.5rem auto;
+            margin: 0.75rem auto;
             display: block;
             font-size: 1rem;
             min-height: 3rem;
@@ -166,7 +166,7 @@
             padding: 1rem;
             border-radius: 0.75rem;
             width: 100%;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.25rem;
             font-size: 1rem;
             box-shadow: inset 0 0.1rem 0.2rem rgba(0, 0, 0, 0.3);
             transition: all 0.15s ease-out;
@@ -177,6 +177,7 @@
         .input:focus {
             background: #343436;
             outline: none;
+            box-shadow: 0 0 0 2px #007aff;
         }
         
         .notification {
@@ -251,9 +252,9 @@
         
         .order-item {
             background: #2c2c2e;
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 0.875rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             transition: all 0.15s ease-out;
             width: 100%;
             max-width: 24rem;
@@ -262,22 +263,22 @@
         }
         
         .order-item h4 {
-            margin: 0 0 0.5rem;
-            font-size: 1rem;
+            margin: 0 0 0.75rem;
+            font-size: 1.1rem;
             font-weight: 600;
         }
         
         .order-item p {
             margin: 0.25rem 0;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             opacity: 0.9;
         }
         
         .orders-item {
             background: #2c2c2e;
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 0.875rem;
-            margin-bottom: 0.75rem;
+            margin-bottom: 1rem;
             transition: all 0.15s ease-out;
             width: 100%;
             max-width: 24rem;
@@ -286,14 +287,14 @@
         }
 
         .orders-item h4 {
-            margin: 0 0 0.5rem;
-            font-size: 1rem;
+            margin: 0 0 0.75rem;
+            font-size: 1.1rem;
             font-weight: 600;
         }
 
         .orders-item p {
             margin: 0.5rem 0;
-            font-size: 1.3rem;
+            font-size: 0.95rem;
             opacity: 0.9;
             text-align: left;
         }
@@ -305,7 +306,7 @@
             width: 100%;
             background: rgba(44, 44, 46, 0.95);
             backdrop-filter: blur(0.5rem);
-            padding: 0.5rem;
+            padding: 0.75rem;
             display: flex;
             justify-content: space-around;
             box-shadow: 0 -0.25rem 0.5rem rgba(0, 0, 0, 0.5);
@@ -352,14 +353,14 @@
         .dashboard-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-            gap: 0.75rem;
+            gap: 1rem;
             width: 100%;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .dashboard-card {
             background: #2c2c2e;
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 0.75rem;
             text-align: center;
             transition: all 0.15s ease-out;
@@ -371,10 +372,10 @@
         }
         
         .dashboard-card h3 {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
             color: #a1a1a6;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
         }
         
         .dashboard-card p {
@@ -409,7 +410,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 1rem;
+            padding: 1.5rem;
             background: #1c1c1e;
             z-index: 2000;
         }
@@ -417,7 +418,7 @@
         .login-container {
             width: 100%;
             max-width: 24rem;
-            padding: 1.5rem;
+            padding: 2rem;
             background: rgba(37, 37, 39, 0.95);
             border-radius: 1rem;
             box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.3);
@@ -428,7 +429,7 @@
             font-size: 1.75rem;
             font-weight: 700;
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             background: linear-gradient(45deg, #007aff, #34c759);
             -webkit-background-clip: text;
             background-clip: text;
@@ -437,20 +438,20 @@
         
         .form-group {
             position: relative;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
         
         .form-label {
             display: block;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
             color: rgba(255, 255, 255, 0.8);
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 500;
         }
         
         .form-input {
             width: 100%;
-            padding: 0.875rem;
+            padding: 1rem;
             background: #2c2c2e;
             border: none;
             border-radius: 0.75rem;
@@ -486,7 +487,7 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            margin-top: 1rem;
+            margin-top: 1.25rem;
         }
         
         .spinner {
@@ -505,54 +506,76 @@
         }
         
         /* Menu Management Styles */
+        #manage-menu {
+            padding: 2.5rem;
+        }
+        
+        #manage-menu h2 {
+            font-size: clamp(1.5rem, 4vw, 1.75rem);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+        }
+        
+        #manage-menu p {
+            font-size: clamp(0.95rem, 3vw, 1.1rem);
+            opacity: 0.8;
+            margin-bottom: 2rem;
+        }
+        
+        #manage-menu .btn {
+            font-size: 1.1rem;
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            min-height: 3.5rem;
+            max-width: 24rem;
+            margin-bottom: 2rem;
+            background: #007aff;
+        }
+        
         .menu-list {
             display: flex;
             flex-direction: column;
-            gap: 0.75rem;
+            gap: 1.25rem;
+            width: 100%;
         }
+        
         .menu-item {
             background: #2c2c2e;
-            padding: 1rem;
-            border-radius: 0.875rem;
-            text-align: left;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             transition: all 0.15s ease-out;
+            box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.3);
         }
+        
         .menu-item h4 {
             font-size: 1.2rem;
             font-weight: 600;
-            margin: 0 0 0.5rem;
+            margin: 0;
+            flex: 1;
+            text-align: left;
         }
+        
         .menu-item p {
-            font-size: 0.95rem;
+            font-size: 1rem;
             opacity: 0.8;
-            margin: 0.25rem 0;
-            word-wrap: break-word;
+            margin: 0.5rem 0 0;
+            text-align: left;
         }
-        .menu-item .options-toggle {
-            color: #007aff;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-        }
-        .menu-item .options-details {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        .menu-item .options-details.show {
-            max-height: 10rem;
-        }
+        
         .menu-item-actions {
             display: flex;
-            gap: 0.5rem;
-            justify-content: flex-end;
-            margin-top: 0.75rem;
+            gap: 0.75rem;
         }
+        
         .menu-item-actions .btn {
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.75rem 1.25rem;
+            font-size: 0.95rem;
             min-height: 2.5rem;
             max-width: 6rem;
+            margin: 0;
         }
         
         /* Modal Styles */
@@ -561,15 +584,15 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 70%;
-            background: rgba(0, 0, 0, 0.8);
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
 
         .modal.show {
@@ -578,91 +601,95 @@
         }
 
         .modal-content {
-            background: #3a3a3c;
+            background: #252527;
             border-radius: 1.5rem;
-            padding: 2rem;
-            width: 95%;
-            max-width: 28rem;
-            max-height: 90vh;
+            padding: 2.5rem;
+            width: 90%;
+            max-width: 32rem;
+            max-height: 70vh;
             overflow-y: auto;
-            box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.7);
-            animation: fadeIn 0.3s ease-out;
-            color: #ffffff;
-            font-family: 'SF Pro Display', sans-serif;
+            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.7);
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        .modal-close-btn {
+        position: absolute;
+        top: -0.5rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        color: #ff3b30;
+        font-size: 2.5rem;
+        cursor: pointer;
+        padding: 0.5rem;
+        transition: color 0.15s ease-out;
+    }
+
+        @keyframes slideUp {
+            from { transform: translateY(2rem); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
 
         .modal-header {
             text-align: center;
-            margin-bottom: 1.5rem;
         }
 
         .modal-header h3 {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 700;
             background: linear-gradient(45deg, #007aff, #34c759);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
+            margin: 0;
         }
 
         .modal-instructions {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            margin: 0.5rem 0;
-        }
-
-        .help-btn {
-            position: relative;
-            top: 1rem;
-            right: 1rem;
-            background: #5856d6;
-            padding: 0.5rem 1rem;
-            border-radius: 0.75rem;
-            color: #ffffff;
             font-size: 1rem;
-            border: none;
-            cursor: pointer;
+            opacity: 0.8;
+            margin: 0.75rem 0 0;
         }
 
         .form-group {
-            margin-bottom: 1.5rem;
+            width: 100%;
+            margin-bottom: 1.75rem;
         }
 
         .form-label {
             display: block;
-            font-size: 1.5rem;
+            font-size: 1.1rem;
             font-weight: 500;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
             color: #ffffff;
+            text-align: left;
         }
 
-        .input {
-            background: #4a4a4c;
-            border: 2px solid transparent;
+        .modal .input {
+            background: #343436;
+            border: none;
             color: #ffffff;
-            padding: 1rem;
+            padding: 1.25rem;
             border-radius: 1rem;
             width: 100%;
-            font-size: 1.3rem;
-            box-shadow: inset 0 0.1rem 0.2rem rgba(0, 0, 0, 0.3);
-            transition: border 0.2s ease;
+            font-size: 1.1rem;
+            margin: 0;
+            box-shadow: none;
         }
 
-        .input:focus {
-            border: 2px solid #007aff;
-            background: #4a4a4c;
-            outline: none;
+        .modal .input:focus {
+            background: #3a3a3c;
+            box-shadow: 0 0 0 2px #007aff;
         }
 
         .error-message {
             color: #ff3b30;
-            font-size: 1rem;
-            margin-top: 0.25rem;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
             display: none;
         }
 
@@ -671,20 +698,20 @@
         }
 
         .option-group {
-            margin: 1.5rem 0;
+            width: 100%;
+            margin: 1.75rem 0;
             padding: 1.5rem;
             border-radius: 1rem;
-            background: #454547;
+            background: #2c2c2e;
         }
 
         .toggle-btn {
-            background: #5856d6;
-            color: #ffffff;
-            padding: 0.75rem;
-            border-radius: 0.75rem;
+            background: none;
+            color: #007aff;
+            padding: 0.75rem 0;
             width: 100%;
             text-align: left;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             font-weight: 500;
             border: none;
             cursor: pointer;
@@ -698,7 +725,7 @@
         }
 
         .option-list {
-            margin-top: 1rem;
+            margin-top: 1.25rem;
             max-height: 12rem;
             overflow-y: auto;
         }
@@ -706,41 +733,42 @@
         .option-item {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 1rem;
             margin-bottom: 1rem;
             padding: 1rem;
             border-radius: 0.75rem;
-            background: #4a4a4c;
+            background: #343436;
         }
 
         .option-item p {
             flex: 1;
-            font-size: 1.2rem;
+            font-size: 1rem;
             margin: 0;
         }
 
         .option-item .btn {
             padding: 0.75rem;
-            min-height: 3rem;
-            font-size: 1rem;
-            max-width: 3rem;
+            min-height: 2.5rem;
+            font-size: 0.9rem;
+            max-width: 2.5rem;
+            margin: 0;
         }
 
-        .btn {
-            padding: 1rem;
-            border-radius: 1rem;
-            font-size: 1.3rem;
-            font-weight: 500;
-            text-align: center;
-            border: none;
-            cursor: pointer;
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
             width: 100%;
-            min-height: 3.5rem;
-            transition: background 0.2s ease, transform 0.1s ease;
+            margin-top: 2rem;
         }
 
-        .btn:hover {
-            transform: scale(1.02);
+        .modal-actions .btn {
+            flex: 1;
+            padding: 1rem;
+            font-size: 1.1rem;
+            min-height: 3.5rem;
+            max-width: none;
+            margin: 0;
         }
 
         .btn-save {
@@ -781,20 +809,24 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(58, 58, 60);
-            padding: 2rem;
+            background: #252527;
+            padding: 2.5rem;
             border-radius: 1.5rem;
             z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .help-overlay h4 {
             font-size: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .help-overlay p {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            margin-bottom: 1.25rem;
+            text-align: center;
         }
 
         .btn-close-help {
@@ -802,13 +834,14 @@
             width: 100%;
             padding: 1rem;
             border-radius: 1rem;
-            font-size: 1.3rem;
+            font-size: 1.1rem;
             color: #ffffff;
+            margin-top: auto;
         }
 
         @media (max-width: 480px) {
             .section {
-                padding: 1rem;
+                padding: 1.5rem;
                 border-radius: 1rem;
             }
             
@@ -830,31 +863,37 @@
             }
             
             .modal-content {
-                padding: 1.5rem;
-                width: 90%;
+                padding: 2rem;
+                width: 95%;
             }
             
             .modal-header h3 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
             }
             
-            .form-label {
-                font-size: 1.3rem;
+            .modal .form-label {
+                font-size: 1rem;
             }
             
-            .input {
-                font-size: 1.2rem;
-                padding: 0.75rem;
+            .modal .input {
+                font-size: 1rem;
+                padding: 1rem;
             }
             
-            .btn {
-                font-size: 1.2rem;
-                padding: 0.75rem;
+            .modal-actions .btn {
+                font-size: 1rem;
+                padding: 0.9rem;
             }
             
-            .option-item {
+            .menu-item {
                 flex-direction: column;
-                gap: 0.75rem;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .menu-item-actions {
+                width: 100%;
+                justify-content: flex-end;
             }
         }
     </style>
@@ -928,20 +967,20 @@
             <div id="menu-list" class="menu-list"></div>
             <div id="menu-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
                 <div class="modal-content">
+                    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
                     <div class="modal-header">
                         <h3 id="modal-title">Add Dish</h3>
-                        <p class="modal-instructions">Fill in the dish details below. Save when done!</p>
-                        <button class="help-btn" id="help-btn" aria-label="Show help"><i class="fas fa-question-circle"></i> Help</button>
+                        <p class="modal-instructions">Enter the dish details below to add it to your menu.</p>
                     </div>
                     <form id="menu-form" novalidate>
                         <div class="form-group">
                             <label for="menu-name" class="form-label">Dish Name</label>
-                            <input type="text" id="menu-name" class="input" placeholder="Enter dish name (e.g., Chicken Soup)" required aria-describedby="menu-name-error">
+                            <input type="text" id="menu-name" class="input" placeholder="e.g., Chicken Jollof" required aria-describedby="menu-name-error">
                             <span id="menu-name-error" class="error-message"></span>
                         </div>
                         <div class="form-group">
                             <label for="menu-price" class="form-label">Base Price (GH₵)</label>
-                            <input type="number" id="menu-price" class="input" placeholder="Enter price (e.g., 25.00)" step="0.01" min="0" required aria-describedby="menu-price-error">
+                            <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
                             <span id="menu-price-error" class="error-message"></span>
                         </div>
                         <div class="option-group" id="sizes-group">
@@ -955,17 +994,17 @@
                             <button type="button" id="add-extra-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Extra</button>
                         </div>
                         <div class="modal-actions">
-                            <button type="submit" id="save-dish-btn" class="btn btn-save"><i class="fas fa-save"></i> Save</button>
-                            <button type="button" id="cancel-dish-btn" class="btn btn-cancel"><i class="fas fa-times"></i> Cancel</button>
-                            <button type="button" id="undo-btn" class="btn btn-undo hidden"><i class="fas fa-undo"></i> Undo</button>
+                            <button type="submit" id="save-dish-btn" class="btn btn-save">Save</button>
+                            <button type="button" id="cancel-dish-btn" class="btn btn-cancel">Cancel</button>
+                            <button type="button" id="undo-btn" class="btn btn-undo hidden">Undo</button>
                         </div>
                     </form>
                     <div id="help-overlay" class="help-overlay hidden">
                         <h4>How to Add a Dish</h4>
-                        <p>1. Enter the dish name (e.g., "Jollof Rice").</p>
-                        <p>2. Add the base price in GH₵ (e.g., 25.00).</p>
-                        <p>3. Click "Add Size" or "Add Extra" to include options like "Large" or "Extra Cheese".</p>
-                        <p>4. Click "Save" to finish, or "Cancel" to start over.</p>
+                        <p>Enter the dish name, like "Jollof Rice".</p>
+                        <p>Add the base price in GH₵, such as 25.00.</p>
+                        <p>Use "Add Size" or "Add Extra" to include options like "Large" or "Extra Cheese".</p>
+                        <p>Tap "Save" to finish, or "Cancel" to start over.</p>
                         <p>Need more help? <a href="https://wa.me/233509330098" class="text-blue-400">Contact support</a>.</p>
                         <button class="btn btn-close-help" id="btn-close-help">Close</button>
                     </div>
@@ -1034,7 +1073,7 @@
         const loadingScreen = document.getElementById("loading-screen");
         const loginSection = document.getElementById("login-section");
         const mainContent = document.getElementById("main-content");
-        const notification = document.getElementById("notification");
+      
         const menuList = document.getElementById("menu-list");
         const ordersList = document.getElementById("orders-list");
         const deliveredList = document.getElementById("delivered-list");
@@ -1043,21 +1082,6 @@
     
         // Request notification permission and get token
         async function requestNotificationPermission() {
-            try {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    const token = await getToken(messaging, { vapidKey: firebaseConfig.vapidKey });
-                    if (token && restaurantId) {
-                        await setDoc(doc(db, 'restaurant', restaurantId, 'notificationTokens', token), {
-                            token,
-                            timestamp: new Date()
-                        });
-                        console.log('FCM Token saved:', token);
-                    }
-                }
-            } catch (error) {
-                console.error('Error getting FCM token:', error);
-            }
         }
     
         // Handle foreground messages
@@ -1195,29 +1219,16 @@
                     item.className = "menu-item";
                     const hasOptions = (data.sizes?.length > 0) || (data.extras?.length > 0);
                     item.innerHTML = `
-                        <h4>${data.name}</h4>
-                        <p>Base Price: GH₵${data.price.toFixed(2)}</p>
-                        ${hasOptions ? `
-                            <div class="options-toggle">Show Options</div>
-                            <div class="options-details">
-                                ${data.sizes?.length ? `<p><strong>Sizes:</strong> ${data.sizes.map(s => `${s.name} (+GH₵${s.price.toFixed(2)})`).join(", ")}</p>` : ""}
-                                ${data.extras?.length ? `<p><strong>Extras:</strong> ${data.extras.map(e => `${e.name} (+GH₵${e.price.toFixed(2)})`).join(", ")}</p>` : ""}
-                            </div>
-                        ` : ""}
+                        <div>
+                            <h4>${data.name}</h4>
+                            <p>GH₵${data.price.toFixed(2)}</p>
+                        </div>
                         <div class="menu-item-actions">
                             <button class="btn btn-edit edit-dish-btn" data-id="${docSnapshot.id}">Edit</button>
                             <button class="btn btn-secondary delete-dish-btn" data-id="${docSnapshot.id}">Delete</button>
                         </div>
                     `;
                     menuList.appendChild(item);
-                    if (hasOptions) {
-                        const toggle = item.querySelector(".options-toggle");
-                        const details = item.querySelector(".options-details");
-                        toggle.addEventListener("click", () => {
-                            details.classList.toggle("show");
-                            toggle.textContent = details.classList.contains("show") ? "Hide Options" : "Show Options";
-                        });
-                    }
                 });
     
                 document.querySelectorAll(".edit-dish-btn").forEach(btn => {
@@ -1333,7 +1344,7 @@
                 isValid = false;
             }
             if (!price || price < 0 || isNaN(price)) {
-                document.getElementById("menu-price-error").textContent = "Please enter a valid price (e.g., 25.00).";
+                document.getElementById("menu-price-error").textContent = "Please enter a valid price.";
                 document.getElementById("menu-price-error").classList.add("show");
                 isValid = false;
             }
@@ -1398,16 +1409,8 @@
             list.classList.toggle("hidden");
         }
     
-        function showHelp() {
-            document.getElementById("help-overlay").classList.remove("hidden");
-        }
-    
-        function hideHelp() {
-            document.getElementById("help-overlay").classList.add("hidden");
-        }
-    
         async function deleteMenuItem(menuId) {
-            if (!confirm("Are you sure you want to delete this dish? This cannot be undone.")) return;
+            if (!confirm("Are you sure you want to delete this dish?")) return;
             try {
                 await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
                 showNotification("Dish deleted successfully!", "success");
@@ -1420,12 +1423,10 @@
     
         async function markOrderAsBeingDelivered(orderId) {
             try {
-                // Fetch restaurant name
                 const restaurantRef = doc(db, "restaurant", restaurantId);
                 const restaurantSnap = await getDoc(restaurantRef);
                 const restaurantName = restaurantSnap.exists() ? restaurantSnap.data().name || "Unknown Restaurant" : "Unknown Restaurant";
     
-                // Update order with status, restaurant details, and timestamp
                 await updateDoc(doc(db, "orders", orderId), {
                     status: "being_delivered",
                     restaurantId: restaurantId,
@@ -1509,8 +1510,6 @@
         document.querySelectorAll(".toggle-btn").forEach(btn => {
             btn.addEventListener("click", () => toggleOptionGroup(btn));
         });
-        document.getElementById("help-btn").addEventListener("click", showHelp);
-        document.getElementById("btn-close-help").addEventListener("click", hideHelp);
         document.getElementById("menu-form").addEventListener("input", () => {
             hasUnsavedChanges = true;
         });
@@ -1815,6 +1814,11 @@
         document.addEventListener("DOMContentLoaded", () => {
             setupNavigation();
         });
+
+        document.getElementById("modal-close-btn").addEventListener("click", () => {
+        document.getElementById("menu-modal").classList.remove("show");
+    });
+
     </script>
 
     <script>
@@ -1828,13 +1832,6 @@
                 });
             });
         }
-
-        window.addEventListener("load", () => {
-            if (navigator.serviceWorker && navigator.serviceWorker.controller) {
-                document.getElementById("loading-screen").style.display = "none";
-            }
-        });
     </script>
-    
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'92f2cd898b7b1d74',t:'MTc0NDQ2MTczOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
