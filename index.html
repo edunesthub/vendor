@@ -578,68 +578,47 @@
             margin: 0;
         }
         
-        /* Modal Styles */
-        .modal {
+        /* Menu Edit Section Styles */
+        .menu-edit-section {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-
-        .modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: #252527;
-            border-radius: 1.5rem;
-            padding: 2.5rem;
-            width: 90%;
-            max-width: 32rem;
-            max-height: 70vh;
-            overflow-y: auto;
-            box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.7);
-            animation: slideUp 0.3s ease-out;
-            position: relative;
+            background: #1c1c1e;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            z-index: 2000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .menu-edit-section.show {
+            transform: translateY(0);
+        }
+
+        .menu-edit-container {
+            max-width: 36rem;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #252527;
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.3);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .menu-edit-header {
+            text-align: center;
+            margin-bottom: 1.5rem;
             position: relative;
         }
 
-        .modal-close-btn {
-        position: absolute;
-        top: -0.5rem;
-        right: 1rem;
-        background: none;
-        border: none;
-        color: #ff3b30;
-        font-size: 2.5rem;
-        cursor: pointer;
-        padding: 0.5rem;
-        transition: color 0.15s ease-out;
-    }
-
-        @keyframes slideUp {
-            from { transform: translateY(2rem); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            text-align: center;
-        }
-
-        .modal-header h3 {
+        .menu-edit-header h3 {
             font-size: 1.75rem;
             font-weight: 700;
             background: linear-gradient(45deg, #007aff, #34c759);
@@ -649,10 +628,27 @@
             margin: 0;
         }
 
-        .modal-instructions {
+        .menu-edit-instructions {
             font-size: 1rem;
             opacity: 0.8;
             margin: 0.75rem 0 0;
+        }
+
+        .menu-edit-close-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: none;
+            border: none;
+            color: #ff3b30;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.15s ease-out;
+        }
+
+        .menu-edit-close-btn:hover {
+            color: #dc2626;
         }
 
         .form-group {
@@ -669,7 +665,7 @@
             text-align: left;
         }
 
-        .modal .input {
+        .menu-edit-section .input {
             background: #343436;
             border: none;
             color: #ffffff;
@@ -681,7 +677,7 @@
             box-shadow: none;
         }
 
-        .modal .input:focus {
+        .menu-edit-section .input:focus {
             background: #3a3a3c;
             box-shadow: 0 0 0 2px #007aff;
         }
@@ -862,20 +858,20 @@
                 font-size: 0.7rem;
             }
             
-            .modal-content {
-                padding: 2rem;
-                width: 95%;
+            .menu-edit-container {
+                padding: 1.5rem;
+                width: 100%;
             }
             
-            .modal-header h3 {
+            .menu-edit-header h3 {
                 font-size: 1.5rem;
             }
             
-            .modal .form-label {
+            .menu-edit-section .form-label {
                 font-size: 1rem;
             }
             
-            .modal .input {
+            .menu-edit-section .input {
                 font-size: 1rem;
                 padding: 1rem;
             }
@@ -965,49 +961,50 @@
             <p class="text-center mb-4">Add or update your dishes with ease.</p>
             <button id="add-dish-btn" class="btn">Add New Dish</button>
             <div id="menu-list" class="menu-list"></div>
-            <div id="menu-modal" class="modal" role="dialog" aria-labelledby="modal-title" aria-modal="true">
-                <div class="modal-content">
-                    <button class="modal-close-btn" id="modal-close-btn" aria-label="Close modal">&times;</button>
-                    <div class="modal-header">
-                        <h3 id="modal-title">Add Dish</h3>
-                        <p class="modal-instructions">Enter the dish details below to add it to your menu.</p>
+        </div>
+
+        <div id="menu-edit-section" class="menu-edit-section hidden">
+            <div class="menu-edit-container">
+                <div class="menu-edit-header">
+                    <h3 id="menu-edit-title">Add Dish</h3>
+                    <p class="menu-edit-instructions">Enter the dish details below to add it to your menu.</p>
+                    <button class="menu-edit-close-btn" id="menu-edit-close-btn" aria-label="Close section">×</button>
+                </div>
+                <form id="menu-form" novalidate>
+                    <div class="form-group">
+                        <label for="menu-name" class="form-label">Dish Name</label>
+                        <input type="text" id="menu-name" class="input" placeholder="e.g., Chicken Jollof" required aria-describedby="menu-name-error">
+                        <span id="menu-name-error" class="error-message"></span>
                     </div>
-                    <form id="menu-form" novalidate>
-                        <div class="form-group">
-                            <label for="menu-name" class="form-label">Dish Name</label>
-                            <input type="text" id="menu-name" class="input" placeholder="e.g., Chicken Jollof" required aria-describedby="menu-name-error">
-                            <span id="menu-name-error" class="error-message"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="menu-price" class="form-label">Base Price (GH₵)</label>
-                            <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
-                            <span id="menu-price-error" class="error-message"></span>
-                        </div>
-                        <div class="option-group" id="sizes-group">
-                            <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="size-list">Sizes <i class="fas fa-chevron-down"></i></button>
-                            <div id="size-list" class="option-list hidden"></div>
-                            <button type="button" id="add-size-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Size</button>
-                        </div>
-                        <div class="option-group" id="extras-group">
-                            <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="extra-list">Extras <i class="fas fa-chevron-down"></i></button>
-                            <div id="extra-list" class="option-list hidden"></div>
-                            <button type="button" id="add-extra-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Extra</button>
-                        </div>
-                        <div class="modal-actions">
-                            <button type="submit" id="save-dish-btn" class="btn btn-save">Save</button>
-                            <button type="button" id="cancel-dish-btn" class="btn btn-cancel">Cancel</button>
-                            <button type="button" id="undo-btn" class="btn btn-undo hidden">Undo</button>
-                        </div>
-                    </form>
-                    <div id="help-overlay" class="help-overlay hidden">
-                        <h4>How to Add a Dish</h4>
-                        <p>Enter the dish name, like "Jollof Rice".</p>
-                        <p>Add the base price in GH₵, such as 25.00.</p>
-                        <p>Use "Add Size" or "Add Extra" to include options like "Large" or "Extra Cheese".</p>
-                        <p>Tap "Save" to finish, or "Cancel" to start over.</p>
-                        <p>Need more help? <a href="https://wa.me/233509330098" class="text-blue-400">Contact support</a>.</p>
-                        <button class="btn btn-close-help" id="btn-close-help">Close</button>
+                    <div class="form-group">
+                        <label for="menu-price" class="form-label">Base Price (GH₵)</label>
+                        <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
+                        <span id="menu-price-error" class="error-message"></span>
                     </div>
+                    <div class="option-group" id="sizes-group">
+                        <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="size-list">Sizes <i class="fas fa-chevron-down"></i></button>
+                        <div id="size-list" class="option-list hidden"></div>
+                        <button type="button" id="add-size-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Size</button>
+                    </div>
+                    <div class="option-group" id="extras-group">
+                        <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="extra-list">Extras <i class="fas fa-chevron-down"></i></button>
+                        <div id="extra-list" class="option-list hidden"></div>
+                        <button type="button" id="add-extra-btn" class="btn btn-add"><i class="fas fa-plus"></i> Add Extra</button>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" id="save-dish-btn" class="btn btn-save">Save</button>
+                        <button type="button" id="cancel-dish-btn" class="btn btn-cancel">Cancel</button>
+                        <button type="button" id="undo-btn" class="btn btn-undo hidden">Undo</button>
+                    </div>
+                </form>
+                <div id="help-overlay" class="help-overlay hidden">
+                    <h4>How to Add a Dish</h4>
+                    <p>Enter the dish name, like "Jollof Rice".</p>
+                    <p>Add the base price in GH₵, such as 25.00.</p>
+                    <p>Use "Add Size" or "Add Extra" to include options like "Large" or "Extra Cheese".</p>
+                    <p>Tap "Save" to finish, or "Cancel" to start over.</p>
+                    <p>Need more help? <a href="https://wa.me/233509330098" class="text-blue-400">Contact support</a>.</p>
+                    <button class="btn btn-close-help" id="btn-close-help">Close</button>
                 </div>
             </div>
         </div>
@@ -1116,13 +1113,15 @@
         }
     
         function toggleSection(sectionId) {
-            const sections = ["store", "manage-menu", "view-orders", "delivered", "settings"];
+            const sections = ["store", "manage-menu", "view-orders", "delivered", "settings", "menu-edit-section"];
             sections.forEach(id => {
                 const section = document.getElementById(id);
                 const button = document.getElementById(`${id}-btn`);
                 if (section && button) {
                     section.classList.toggle("hidden", id !== sectionId);
                     button.classList.toggle("active", id === sectionId);
+                } else if (section) {
+                    section.classList.toggle("hidden", id !== sectionId);
                 }
             });
         }
@@ -1232,7 +1231,7 @@
                 });
     
                 document.querySelectorAll(".edit-dish-btn").forEach(btn => {
-                    btn.addEventListener("click", () => openEditModal(btn.dataset.id));
+                    btn.addEventListener("click", () => openEditSection(btn.dataset.id));
                 });
                 document.querySelectorAll(".delete-dish-btn").forEach(btn => {
                     btn.addEventListener("click", () => deleteMenuItem(btn.dataset.id));
@@ -1244,13 +1243,13 @@
             }
         }
     
-        // Modal state
+        // Section state
         let lastDeletedOption = null;
         let hasUnsavedChanges = false;
     
-        function openAddModal() {
-            const modal = document.getElementById("menu-modal");
-            const title = document.getElementById("modal-title");
+        function openAddSection() {
+            const section = document.getElementById("menu-edit-section");
+            const title = document.getElementById("menu-edit-title");
             const form = document.getElementById("menu-form");
             const nameInput = document.getElementById("menu-name");
             const priceInput = document.getElementById("menu-price");
@@ -1264,21 +1263,22 @@
             extraList.innerHTML = "";
             form.dataset.mode = "add";
             delete form.dataset.id;
-            modal.classList.add("show");
+            section.classList.add("show");
+            section.classList.remove("hidden");
             nameInput.focus();
             undoBtn.classList.add("hidden");
             hasUnsavedChanges = false;
             clearErrors();
         }
     
-        async function openEditModal(menuId) {
+        async function openEditSection(menuId) {
             try {
                 const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
                 const docSnap = await getDoc(docRef);
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    const modal = document.getElementById("menu-modal");
-                    const title = document.getElementById("modal-title");
+                    const section = document.getElementById("menu-edit-section");
+                    const title = document.getElementById("menu-edit-title");
                     const form = document.getElementById("menu-form");
                     const nameInput = document.getElementById("menu-name");
                     const priceInput = document.getElementById("menu-price");
@@ -1307,7 +1307,8 @@
                         : "";
                     form.dataset.mode = "edit";
                     form.dataset.id = menuId;
-                    modal.classList.add("show");
+                    section.classList.add("show");
+                    section.classList.remove("hidden");
                     nameInput.focus();
                     undoBtn.classList.add("hidden");
                     hasUnsavedChanges = false;
@@ -1317,14 +1318,15 @@
                     showNotification("Dish not found.", "error");
                 }
             } catch (error) {
-                console.error("Error opening edit modal:", error);
+                console.error("Error opening edit section:", error);
                 showNotification("Failed to load dish details.", "error");
             }
         }
     
-        function closeModal() {
-            const modal = document.getElementById("menu-modal");
-            modal.classList.remove("show");
+        function closeSection() {
+            const section = document.getElementById("menu-edit-section");
+            section.classList.remove("show");
+            setTimeout(() => section.classList.add("hidden"), 300);
             hasUnsavedChanges = false;
         }
     
@@ -1440,8 +1442,9 @@
             }
         }
     
-        document.getElementById("add-dish-btn").addEventListener("click", openAddModal);
-        document.getElementById("cancel-dish-btn").addEventListener("click", closeModal);
+        document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
+        document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
+        document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
         document.getElementById("undo-btn").addEventListener("click", undoDelete);
         document.getElementById("add-size-btn").addEventListener("click", () => {
             const name = prompt("Enter size name (e.g., Large):");
@@ -1500,7 +1503,7 @@
                     await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras });
                     showNotification("Dish updated successfully!", "success");
                 }
-                closeModal();
+                closeSection();
                 loadMenu();
             } catch (error) {
                 console.error(`Error ${mode === "add" ? "adding" : "updating"} dish:`, error);
@@ -1814,10 +1817,6 @@
         document.addEventListener("DOMContentLoaded", () => {
             setupNavigation();
         });
-
-        document.getElementById("modal-close-btn").addEventListener("click", () => {
-        document.getElementById("menu-modal").classList.remove("show");
-    });
 
     </script>
 
