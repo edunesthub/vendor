@@ -1045,216 +1045,248 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { 
-            getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
-        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        import { 
-            getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
-        } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    
-        const firebaseConfig = {
-            apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
-            authDomain: "von600-7982d.firebaseapp.com",
-            projectId: "von600-7982d",
-            storageBucket: "von600-7982d.appspot.com",
-            messagingSenderId: "164591218045",
-            appId: "1:164591218045:web:afe17512e16573e7903014",
-            measurementId: "G-E69DMPLXBK",
-            vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk"
-        };
-    
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        let restaurantId = null;
-    
-        const loadingScreen = document.getElementById("loading-screen");
-        const loginSection = document.getElementById("login-section");
-        const mainContent = document.getElementById("main-content");
-        const menuList = document.getElementById("menu-list");
-        const ordersList = document.getElementById("orders-list");
-        const deliveredList = document.getElementById("delivered-list");
-        const dashboardGrid = document.getElementById("dashboard-grid");
-    
-        // Initialize OneSignal
-        window.OneSignal = window.OneSignal || [];
-        OneSignal.push(function() {
-            OneSignal.init({
-                appId: "bd22b221-3f13-4105-977e-330f65419187",
-                allowLocalhostAsSecureOrigin: true,
-                notifyButton: {
-                    enable: false,
-                }
-            });
-            OneSignal.showNativePrompt();
-            OneSignal.on("notificationOpened", function(event) {
-                toggleSection("view-orders");
-                loadOrders();
-            });
+import { 
+    getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+import { 
+    getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyADvpUQWo75ExePGoCRirD2mM-lmfM4Cmc",
+    authDomain: "von600-7982d.firebaseapp.com",
+    projectId: "von600-7982d",
+    storageBucket: "von600-7982d.appspot.com",
+    messagingSenderId: "164591218045",
+    appId: "1:164591218045:web:afe17512e16573e7903014",
+    measurementId: "G-E69DMPLXBK",
+    vapidKey: "BDN5OP5zbD5oeO9Dw1iqr_Bl9t0GGk-Bm0rnh14gzLDU3frlOMGxLzXAXb82A3VrqI3REnmkdTTu1OkcYCeg9Rk"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+let restaurantId = null;
+
+// Track processed order IDs to prevent duplicate notifications
+const processedOrderIds = new Set();
+
+const loadingScreen = document.getElementById("loading-screen");
+const loginSection = document.getElementById("login-section");
+const mainContent = document.getElementById("main-content");
+const menuList = document.getElementById("menu-list");
+const ordersList = document.getElementById("orders-list");
+const deliveredList = document.getElementById("delivered-list");
+const dashboardGrid = document.getElementById("dashboard-grid");
+
+// Initialize OneSignal
+window.OneSignal = window.OneSignal || [];
+OneSignal.push(function() {
+    OneSignal.init({
+        appId: "bd22b221-3f13-4105-977e-330f65419187",
+        allowLocalhostAsSecureOrigin: true,
+        notifyButton: {
+            enable: false,
+        }
+    });
+    OneSignal.showNativePrompt();
+    OneSignal.on("notificationOpened", function(event) {
+        toggleSection("view-orders");
+        loadOrders();
+    });
+});
+
+function showNotification(message, type = "success") {
+    const notification = document.getElementById("notification");
+    if (window.notificationTimer) {
+        clearTimeout(window.notificationTimer);
+    }
+    const icon = type === "error" ? "fa-circle-exclamation" : 
+                type === "warning" ? "fa-triangle-exclamation" : 
+                type === "info" ? "fa-circle-info" : "fa-circle-check";
+    notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+    notification.className = `notification ${type}`;
+    void notification.offsetWidth;
+    notification.classList.add("show");
+    if (type === "error" || type === "warning") {
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+            audio.play().catch(() => {});
+        } catch (e) {}
+    }
+    if (type === "error" && navigator.vibrate) {
+        navigator.vibrate(200);
+    }
+    window.notificationTimer = setTimeout(() => {
+        notification.classList.remove("show");
+    }, 4000);
+}
+
+function toggleSection(sectionId) {
+    const sections = ["store", "manage-menu", "view-orders", "delivered", "settings", "menu-edit-section"];
+    sections.forEach(id => {
+        const section = document.getElementById(id);
+        const button = document.getElementById(`${id}-btn`);
+        if (section && button) {
+            section.classList.toggle("hidden", id !== sectionId);
+            button.classList.toggle("active", id === sectionId);
+        } else if (section) {
+            section.classList.toggle("hidden", id !== sectionId);
+        }
+    });
+}
+
+async function loadDashboard() {
+    if (!restaurantId) return;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+    let activeDeliveries = 0;
+    let completedToday = 0;
+    let totalOrdersToday = 0;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        activeDeliveries = 0;
+        completedToday = 0;
+        totalOrdersToday = 0;
+        snapshot.forEach(doc => {
+            const order = doc.data();
+            const timestamp = new Date(order.timestamp).getTime();
+            if (timestamp >= todayTimestamp) {
+                totalOrdersToday++;
+            }
+            if (order.status === "delivered" && timestamp >= todayTimestamp) {
+                completedToday++;
+            }
+            if (order.status === "being_delivered") {
+                activeDeliveries++;
+            }
         });
-    
-        function showNotification(message, type = "success") {
-            const notification = document.getElementById("notification");
-            if (window.notificationTimer) {
-                clearTimeout(window.notificationTimer);
-            }
-            const icon = type === "error" ? "fa-circle-exclamation" : 
-                        type === "warning" ? "fa-triangle-exclamation" : 
-                        type === "info" ? "fa-circle-info" : "fa-circle-check";
-            notification.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
-            notification.className = `notification ${type}`;
-            void notification.offsetWidth;
-            notification.classList.add("show");
-            if (type === "error" || type === "warning") {
-                try {
-                    const audio = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
-                    audio.play().catch(() => {});
-                } catch (e) {}
-            }
-            if (type === "error" && navigator.vibrate) {
-                navigator.vibrate(200);
-            }
-            window.notificationTimer = setTimeout(() => {
-                notification.classList.remove("show");
-            }, 4000);
+        const totalAmountToday = snapshot.docs
+            .filter(doc => {
+                const order = doc.data();
+                return new Date(order.timestamp).getTime() >= todayTimestamp;
+            })
+            .reduce((sum, doc) => {
+                const order = doc.data();
+                return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
+            }, 0);
+        dashboardGrid.innerHTML = `
+            <div class="dashboard-card">
+                <h3>Today's Orders</h3>
+                <p>${totalOrdersToday}</p>
+            </div>
+            <div class="dashboard-card">
+                <h3>Completed Orders</h3>
+                <p>${completedToday}</p>
+            </div>
+            <div class="dashboard-card">
+                <h3>Today's Earnings</h3>
+                <p>GH₵${totalAmountToday.toFixed(2)}</p>
+            </div>
+            <div class="dashboard-card">
+                <h3>Active Deliveries</h3>
+                <p>${activeDeliveries}</p>
+            </div>
+        `;
+    }, (error) => {
+        console.error("Dashboard error:", error);
+        dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
+    });
+}
+
+async function loadRestaurantData() {
+    if (!restaurantId) return;
+    const docRef = doc(db, "restaurant", restaurantId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("store-name").value = data.name || "";
+        document.getElementById("store-image").value = data.image || "";
+        document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"}`;
+        document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
+        const isOpen = data.isOpen || false;
+        document.getElementById("status-text").textContent = isOpen ? "Open" : "Closed";
+        document.getElementById("status-text").style.color = isOpen ? "#34c759" : "#ff3b30";
+    }
+}
+
+async function loadMenu() {
+    if (!restaurantId) return;
+    menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
+    try {
+        const menuRef = collection(db, "restaurant", restaurantId, "menu");
+        const querySnapshot = await getDocs(menuRef);
+        menuList.innerHTML = "";
+        if (querySnapshot.empty) {
+            menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
+            return;
         }
-    
-        function toggleSection(sectionId) {
-            const sections = ["store", "manage-menu", "view-orders", "delivered", "settings", "menu-edit-section"];
-            sections.forEach(id => {
-                const section = document.getElementById(id);
-                const button = document.getElementById(`${id}-btn`);
-                if (section && button) {
-                    section.classList.toggle("hidden", id !== sectionId);
-                    button.classList.toggle("active", id === sectionId);
-                } else if (section) {
-                    section.classList.toggle("hidden", id !== sectionId);
-                }
-            });
-        }
-    
-        async function loadDashboard() {
-            if (!restaurantId) return;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            const todayTimestamp = today.getTime();
-            let activeDeliveries = 0;
-            let completedToday = 0;
-            let totalOrdersToday = 0;
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                activeDeliveries = 0;
-                completedToday = 0;
-                totalOrdersToday = 0;
-                snapshot.forEach(doc => {
-                    const order = doc.data();
-                    const timestamp = new Date(order.timestamp).getTime();
-                    if (timestamp >= todayTimestamp) {
-                        totalOrdersToday++;
-                    }
-                    if (order.status === "delivered" && timestamp >= todayTimestamp) {
-                        completedToday++;
-                    }
-                    if (order.status === "being_delivered") {
-                        activeDeliveries++;
-                    }
-                });
-                const totalAmountToday = snapshot.docs
-                    .filter(doc => {
-                        const order = doc.data();
-                        return new Date(order.timestamp).getTime() >= todayTimestamp;
-                    })
-                    .reduce((sum, doc) => {
-                        const order = doc.data();
-                        return sum + order.items.reduce((sub, item) => sub + item.price * item.quantity, 0);
-                    }, 0);
-                dashboardGrid.innerHTML = `
-                    <div class="dashboard-card">
-                        <h3>Today's Orders</h3>
-                        <p>${totalOrdersToday}</p>
-                    </div>
-                    <div class="dashboard-card">
-                        <h3>Completed Orders</h3>
-                        <p>${completedToday}</p>
-                    </div>
-                    <div class="dashboard-card">
-                        <h3>Today's Earnings</h3>
-                        <p>GH₵${totalAmountToday.toFixed(2)}</p>
-                    </div>
-                    <div class="dashboard-card">
-                        <h3>Active Deliveries</h3>
-                        <p>${activeDeliveries}</p>
-                    </div>
-                `;
-            }, (error) => {
-                console.error("Dashboard error:", error);
-                dashboardGrid.innerHTML = `<p class='text-gray-400'>Error loading dashboard.</p>`;
-            });
-        }
-    
-        async function loadRestaurantData() {
-            if (!restaurantId) return;
-            const docRef = doc(db, "restaurant", restaurantId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                document.getElementById("store-name").value = data.name || "";
-                document.getElementById("store-image").value = data.image || "";
-                document.getElementById("restaurant-name").textContent = `${data.name || "Vendor"}`;
-                document.getElementById("welcome-message").textContent = `Manage ${data.name || "your store"} with elegance.`;
-                const isOpen = data.isOpen || false;
-                document.getElementById("status-text").textContent = isOpen ? "Open" : "Closed";
-                document.getElementById("status-text").style.color = isOpen ? "#34c759" : "#ff3b30";
-            }
-        }
-    
-        async function loadMenu() {
-            if (!restaurantId) return;
-            menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
-            try {
-                const menuRef = collection(db, "restaurant", restaurantId, "menu");
-                const querySnapshot = await getDocs(menuRef);
-                menuList.innerHTML = "";
-                if (querySnapshot.empty) {
-                    menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
-                    return;
-                }
-                querySnapshot.forEach(docSnapshot => {
-                    const data = docSnapshot.data();
-                    const item = document.createElement("div");
-                    item.className = "menu-item";
-                    const hasOptions = (data.sizes?.length > 0) || (data.extras?.length > 0);
-                    item.innerHTML = `
-                        <div>
-                            <h4>${data.name}</h4>
-                            <p>GH₵${data.price.toFixed(2)}</p>
-                        </div>
-                        <div class="menu-item-actions">
-                            <button class="btn btn-edit edit-dish-btn" data-id="${docSnapshot.id}">Edit</button>
-                            <button class="btn btn-secondary delete-dish-btn" data-id="${docSnapshot.id}">Delete</button>
-                        </div>
-                    `;
-                    menuList.appendChild(item);
-                });
-    
-                document.querySelectorAll(".edit-dish-btn").forEach(btn => {
-                    btn.addEventListener("click", () => openEditSection(btn.dataset.id));
-                });
-                document.querySelectorAll(".delete-dish-btn").forEach(btn => {
-                    btn.addEventListener("click", () => deleteMenuItem(btn.dataset.id));
-                });
-            } catch (error) {
-                console.error("Error loading menu:", error);
-                menuList.innerHTML = "<p class='text-gray-400'>Error loading menu. Please try again.</p>";
-                showNotification("Failed to load menu.", "error");
-            }
-        }
-    
-        // Section state
-        let lastDeletedOption = null;
-        let hasUnsavedChanges = false;
-    
-        function openAddSection() {
+        querySnapshot.forEach(docSnapshot => {
+            const data = docSnapshot.data();
+            const item = document.createElement("div");
+            item.className = "menu-item";
+            const hasOptions = (data.sizes?.length > 0) || (data.extras?.length > 0);
+            item.innerHTML = `
+                <div>
+                    <h4>${data.name}</h4>
+                    <p>GH₵${data.price.toFixed(2)}</p>
+                </div>
+                <div class="menu-item-actions">
+                    <button class="btn btn-edit edit-dish-btn" data-id="${docSnapshot.id}">Edit</button>
+                    <button class="btn btn-secondary delete-dish-btn" data-id="${docSnapshot.id}">Delete</button>
+                </div>
+            `;
+            menuList.appendChild(item);
+        });
+
+        document.querySelectorAll(".edit-dish-btn").forEach(btn => {
+            btn.addEventListener("click", () => openEditSection(btn.dataset.id));
+        });
+        document.querySelectorAll(".delete-dish-btn").forEach(btn => {
+            btn.addEventListener("click", () => deleteMenuItem(btn.dataset.id));
+        });
+    } catch (error) {
+        console.error("Error loading menu:", error);
+        menuList.innerHTML = "<p class='text-gray-400'>Error loading menu. Please try again.</p>";
+        showNotification("Failed to load menu.", "error");
+    }
+}
+
+// Section state
+let lastDeletedOption = null;
+let hasUnsavedChanges = false;
+
+function openAddSection() {
+    const section = document.getElementById("menu-edit-section");
+    const title = document.getElementById("menu-edit-title");
+    const form = document.getElementById("menu-form");
+    const nameInput = document.getElementById("menu-name");
+    const priceInput = document.getElementById("menu-price");
+    const sizeList = document.getElementById("size-list");
+    const extraList = document.getElementById("extra-list");
+    const undoBtn = document.getElementById("undo-btn");
+
+    title.textContent = "Add Dish";
+    form.reset();
+    sizeList.innerHTML = "";
+    extraList.innerHTML = "";
+    form.dataset.mode = "add";
+    delete form.dataset.id;
+    section.classList.add("show");
+    section.classList.remove("hidden");
+    nameInput.focus();
+    undoBtn.classList.add("hidden");
+    hasUnsavedChanges = false;
+    clearErrors();
+}
+
+async function openEditSection(menuId) {
+    try {
+        const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
             const section = document.getElementById("menu-edit-section");
             const title = document.getElementById("menu-edit-title");
             const form = document.getElementById("menu-form");
@@ -1263,643 +1295,621 @@
             const sizeList = document.getElementById("size-list");
             const extraList = document.getElementById("extra-list");
             const undoBtn = document.getElementById("undo-btn");
-    
-            title.textContent = "Add Dish";
-            form.reset();
-            sizeList.innerHTML = "";
-            extraList.innerHTML = "";
-            form.dataset.mode = "add";
-            delete form.dataset.id;
+
+            title.textContent = "Edit Dish";
+            nameInput.value = data.name;
+            priceInput.value = data.price.toFixed(2);
+            sizeList.innerHTML = data.sizes?.length
+                ? data.sizes.map((size, index) => `
+                    <div class="option-item" data-index="${index}">
+                        <p>${size.name} (GH₵${size.price.toFixed(2)})</p>
+                        <button type="button" class="btn btn-cancel delete-option-btn" data-type="size" data-index="${index}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join("")
+                : "";
+            extraList.innerHTML = data.extras?.length
+                ? data.extras.map((extra, index) => `
+                    <div class="option-item" data-index="${index}">
+                        <p>${extra.name} (GH₵${extra.price.toFixed(2)})</p>
+                        <button type="button" class="btn btn-cancel delete-option-btn" data-type="extra" data-index="${index}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join("")
+                : "";
+            form.dataset.mode = "edit";
+            form.dataset.id = menuId;
             section.classList.add("show");
             section.classList.remove("hidden");
             nameInput.focus();
             undoBtn.classList.add("hidden");
             hasUnsavedChanges = false;
             clearErrors();
-        }
-    
-        async function openEditSection(menuId) {
-            try {
-                const docRef = doc(db, "restaurant", restaurantId, "menu", menuId);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    const section = document.getElementById("menu-edit-section");
-                    const title = document.getElementById("menu-edit-title");
-                    const form = document.getElementById("menu-form");
-                    const nameInput = document.getElementById("menu-name");
-                    const priceInput = document.getElementById("menu-price");
-                    const sizeList = document.getElementById("size-list");
-                    const extraList = document.getElementById("extra-list");
-                    const undoBtn = document.getElementById("undo-btn");
-    
-                    title.textContent = "Edit Dish";
-                    nameInput.value = data.name;
-                    priceInput.value = data.price.toFixed(2);
-                    sizeList.innerHTML = data.sizes?.length
-                        ? data.sizes.map((size, index) => `
-                            <div class="option-item" data-index="${index}">
-                                <p>${size.name} (GH₵${size.price.toFixed(2)})</p>
-                                <button type="button" class="btn btn-cancel delete-option-btn" data-type="size" data-index="${index}"><i class="fas fa-trash"></i></button>
-                            </div>
-                        `).join("")
-                        : "";
-                    extraList.innerHTML = data.extras?.length
-                        ? data.extras.map((extra, index) => `
-                            <div class="option-item" data-index="${index}">
-                                <p>${extra.name} (GH₵${extra.price.toFixed(2)})</p>
-                                <button type="button" class="btn btn-cancel delete-option-btn" data-type="extra" data-index="${index}"><i class="fas fa-trash"></i></button>
-                            </div>
-                        `).join("")
-                        : "";
-                    form.dataset.mode = "edit";
-                    form.dataset.id = menuId;
-                    section.classList.add("show");
-                    section.classList.remove("hidden");
-                    nameInput.focus();
-                    undoBtn.classList.add("hidden");
-                    hasUnsavedChanges = false;
-                    clearErrors();
-                    attachOptionDeleteListeners();
-                } else {
-                    showNotification("Dish not found.", "error");
-                }
-            } catch (error) {
-                console.error("Error opening edit section:", error);
-                showNotification("Failed to load dish details.", "error");
-            }
-        }
-    
-        function closeSection() {
-            const section = document.getElementById("menu-edit-section");
-            section.classList.remove("show");
-            setTimeout(() => section.classList.add("hidden"), 300);
-            hasUnsavedChanges = false;
-        }
-    
-        function clearErrors() {
-            document.querySelectorAll(".error-message").forEach(el => {
-                el.textContent = "";
-                el.classList.remove("show");
-            });
-        }
-    
-        function validateForm(name, price) {
-            clearErrors();
-            let isValid = true;
-            if (!name.trim()) {
-                document.getElementById("menu-name-error").textContent = "Please enter a dish name.";
-                document.getElementById("menu-name-error").classList.add("show");
-                isValid = false;
-            }
-            if (!price || price < 0 || isNaN(price)) {
-                document.getElementById("menu-price-error").textContent = "Please enter a valid price.";
-                document.getElementById("menu-price-error").classList.add("show");
-                isValid = false;
-            }
-            return isValid;
-        }
-    
-        function addOption(type, name, price) {
-            const list = document.getElementById(`${type}-list`);
-            const index = list.querySelectorAll(".option-item").length;
-            list.insertAdjacentHTML("beforeend", `
-                <div class="option-item" data-index="${index}">
-                    <p>${name} (GH₵${price.toFixed(2)})</p>
-                    <button type="button" class="btn btn-cancel delete-option-btn" data-type="${type}" data-index="${index}"><i class="fas fa-trash"></i></button>
-                </div>
-            `);
-            hasUnsavedChanges = true;
             attachOptionDeleteListeners();
+        } else {
+            showNotification("Dish not found.", "error");
         }
-    
-        function deleteOption(btn) {
-            const index = parseInt(btn.dataset.index);
-            const type = btn.dataset.type;
-            const list = document.getElementById(`${type}-list`);
-            const item = list.querySelector(`.option-item[data-index="${index}"]`);
-            if (!item) return;
-    
-            lastDeletedOption = {
-                type,
-                index,
-                name: item.querySelector("p").textContent.split(" (")[0],
-                price: parseFloat(item.querySelector("p").textContent.match(/GH₵([\d.]+)/)[1]),
-            };
-            item.remove();
-            document.getElementById("undo-btn").classList.remove("hidden");
-            hasUnsavedChanges = true;
-        }
-    
-        function undoDelete() {
-            if (!lastDeletedOption) return;
-            addOption(lastDeletedOption.type, lastDeletedOption.name, lastDeletedOption.price);
-            document.getElementById("undo-btn").classList.add("hidden");
-            lastDeletedOption = null;
-        }
-    
-        function attachOptionDeleteListeners() {
-            document.querySelectorAll(".delete-option-btn").forEach(btn => {
-                btn.removeEventListener("click", handleDeleteOption);
-                btn.addEventListener("click", handleDeleteOption);
-            });
-        }
-    
-        function handleDeleteOption(e) {
-            if (confirm("Delete this option?")) {
-                deleteOption(e.target.closest("button"));
-            }
-        }
-    
-        function toggleOptionGroup(btn) {
-            const list = document.getElementById(btn.getAttribute("aria-controls"));
-            const isExpanded = btn.getAttribute("aria-expanded") === "true";
-            btn.setAttribute("aria-expanded", !isExpanded);
-            list.classList.toggle("hidden");
-        }
-    
-        async function deleteMenuItem(menuId) {
-            if (!confirm("Are you sure you want to delete this dish?")) return;
-            try {
-                await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
-                showNotification("Dish deleted successfully!", "success");
-                loadMenu();
-            } catch (error) {
-                console.error("Error deleting dish:", error);
-                showNotification("Failed to delete dish.", "error");
-            }
-        }
-    
-        async function markOrderAsBeingDelivered(orderId) {
-            try {
-                const restaurantRef = doc(db, "restaurant", restaurantId);
-                const restaurantSnap = await getDoc(restaurantRef);
-                const restaurantName = restaurantSnap.exists() ? restaurantSnap.data().name || "Unknown Restaurant" : "Unknown Restaurant";
-    
-                await updateDoc(doc(db, "orders", orderId), {
-                    status: "being_delivered",
-                    restaurantId: restaurantId,
-                    restaurantName: restaurantName,
-                    beingDeliveredTimestamp: new Date().toISOString()
-                });
-                showNotification("Order marked as being delivered!");
-            } catch (error) {
-                console.error("Error marking order as being delivered:", error);
-                showNotification("Failed to update order status.", "error");
-            }
-        }
-    
-        document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
-        document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
-        document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
-        document.getElementById("undo-btn").addEventListener("click", undoDelete);
-        document.getElementById("add-size-btn").addEventListener("click", () => {
-            const name = prompt("Enter size name (e.g., Large):");
-            if (!name) return;
-            const price = prompt("Enter extra price for this size (e.g., 5.00):");
-            const parsedPrice = parseFloat(price);
-            if (isNaN(parsedPrice) || parsedPrice < 0) {
-                showNotification("Please enter a valid price.", "error");
-                return;
-            }
-            addOption("size", name.trim(), parsedPrice);
+    } catch (error) {
+        console.error("Error opening edit section:", error);
+        showNotification("Failed to load dish details.", "error");
+    }
+}
+
+function closeSection() {
+    const section = document.getElementById("menu-edit-section");
+    section.classList.remove("show");
+    setTimeout(() => section.classList.add("hidden"), 300);
+    hasUnsavedChanges = false;
+}
+
+function clearErrors() {
+    document.querySelectorAll(".error-message").forEach(el => {
+        el.textContent = "";
+        el.classList.remove("show");
+    });
+}
+
+function validateForm(name, price) {
+    clearErrors();
+    let isValid = true;
+    if (!name.trim()) {
+        document.getElementById("menu-name-error").textContent = "Please enter a dish name.";
+        document.getElementById("menu-name-error").classList.add("show");
+        isValid = false;
+    }
+    if (!price || price < 0 || isNaN(price)) {
+        document.getElementById("menu-price-error").textContent = "Please enter a valid price.";
+        document.getElementById("menu-price-error").classList.add("show");
+        isValid = false;
+    }
+    return isValid;
+}
+
+function addOption(type, name, price) {
+    const list = document.getElementById(`${type}-list`);
+    const index = list.querySelectorAll(".option-item").length;
+    list.insertAdjacentHTML("beforeend", `
+        <div class="option-item" data-index="${index}">
+            <p>${name} (GH₵${price.toFixed(2)})</p>
+            <button type="button" class="btn btn-cancel delete-option-btn" data-type="${type}" data-index="${index}"><i class="fas fa-trash"></i></button>
+        </div>
+    `);
+    hasUnsavedChanges = true;
+    attachOptionDeleteListeners();
+}
+
+function deleteOption(btn) {
+    const index = parseInt(btn.dataset.index);
+    const type = btn.dataset.type;
+    const list = document.getElementById(`${type}-list`);
+    const item = list.querySelector(`.option-item[data-index="${index}"]`);
+    if (!item) return;
+
+    lastDeletedOption = {
+        type,
+        index,
+        name: item.querySelector("p").textContent.split(" (")[0],
+        price: parseFloat(item.querySelector("p").textContent.match(/GH₵([\d.]+)/)[1]),
+    };
+    item.remove();
+    document.getElementById("undo-btn").classList.remove("hidden");
+    hasUnsavedChanges = true;
+}
+
+function undoDelete() {
+    if (!lastDeletedOption) return;
+    addOption(lastDeletedOption.type, lastDeletedOption.name, lastDeletedOption.price);
+    document.getElementById("undo-btn").classList.add("hidden");
+    lastDeletedOption = null;
+}
+
+function attachOptionDeleteListeners() {
+    document.querySelectorAll(".delete-option-btn").forEach(btn => {
+        btn.removeEventListener("click", handleDeleteOption);
+        btn.addEventListener("click", handleDeleteOption);
+    });
+}
+
+function handleDeleteOption(e) {
+    if (confirm("Delete this option?")) {
+        deleteOption(e.target.closest("button"));
+    }
+}
+
+function toggleOptionGroup(btn) {
+    const list = document.getElementById(btn.getAttribute("aria-controls"));
+    const isExpanded = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", !isExpanded);
+    list.classList.toggle("hidden");
+}
+
+async function deleteMenuItem(menuId) {
+    if (!confirm("Are you sure you want to delete this dish?")) return;
+    try {
+        await deleteDoc(doc(db, "restaurant", restaurantId, "menu", menuId));
+        showNotification("Dish deleted successfully!", "success");
+        loadMenu();
+    } catch (error) {
+        console.error("Error deleting dish:", error);
+        showNotification("Failed to delete dish.", "error");
+    }
+}
+
+async function markOrderAsBeingDelivered(orderId) {
+    try {
+        const restaurantRef = doc(db, "restaurant", restaurantId);
+        const restaurantSnap = await getDoc(restaurantRef);
+        const restaurantName = restaurantSnap.exists() ? restaurantSnap.data().name || "Unknown Restaurant" : "Unknown Restaurant";
+
+        await updateDoc(doc(db, "orders", orderId), {
+            status: "being_delivered",
+            restaurantId: restaurantId,
+            restaurantName: restaurantName,
+            beingDeliveredTimestamp: new Date().toISOString()
         });
-        document.getElementById("add-extra-btn").addEventListener("click", () => {
-            const name = prompt("Enter extra name (e.g., Extra Cheese):");
-            if (!name) return;
-            const price = prompt("Enter price for this extra (e.g., 2.00):");
-            const parsedPrice = parseFloat(price);
-            if (isNaN(parsedPrice) || parsedPrice < 0) {
-                showNotification("Please enter a valid price.", "error");
-                return;
-            }
-            addOption("extra", name.trim(), parsedPrice);
-        });
-        document.getElementById("menu-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("menu-name").value.trim();
-            const price = parseFloat(document.getElementById("menu-price").value);
-            const form = document.getElementById("menu-form");
-            const mode = form.dataset.mode;
-            const sizeList = document.getElementById("size-list");
-            const extraList = document.getElementById("extra-list");
-    
-            if (!validateForm(name, price)) return;
-    
-            const sizes = Array.from(sizeList.querySelectorAll(".option-item")).map(item => {
-                const text = item.querySelector("p").textContent;
-                return {
-                    name: text.split(" (")[0],
-                    price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
-                };
-            });
-            const extras = Array.from(extraList.querySelectorAll(".option-item")).map(item => {
-                const text = item.querySelector("p").textContent;
-                return {
-                    name: text.split(" (")[0],
-                    price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
-                };
-            });
-    
-            try {
-                if (mode === "add") {
-                    await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras });
-                    showNotification("Dish added successfully!", "success");
-                } else if (mode === "edit") {
-                    const menuId = form.dataset.id;
-                    await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras });
-                    showNotification("Dish updated successfully!", "success");
-                }
-                closeSection();
-                loadMenu();
-            } catch (error) {
-                console.error(`Error ${mode === "add" ? "adding" : "updating"} dish:`, error);
-                showNotification(`Failed to ${mode === "add" ? "add" : "update"} dish.`, "error");
-            }
-        });
-        document.querySelectorAll(".toggle-btn").forEach(btn => {
-            btn.addEventListener("click", () => toggleOptionGroup(btn));
-        });
-        document.getElementById("menu-form").addEventListener("input", () => {
-            hasUnsavedChanges = true;
-        });
-    
-        async function sendNewOrderNotification(orderData) {
-            const ONESIGNAL_APP_ID = "bd22b221-3f13-4105-977e-330f65419187"; // Your OneSignal App ID
-            const ONESIGNAL_API_KEY = "os_v2_app_xurleij7cnaqlf36gmhwkqmrq5xi3ibmde4ebr5fajo2s4a4zyrhtxoxwqcr7jm7bnn74jjkg5wvyamrdhggq4wrglmxioypqsw2jka"; // Replace with your OneSignal REST API Key
-    
-            try {
-                const response = await fetch("https://onesignal.com/api/v1/notifications", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Basic ${ONESIGNAL_API_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        app_id: ONESIGNAL_APP_ID,
-                        include_external_user_ids: [orderData.externalUserId], // Vendor email
-                        contents: {
-                            en: `New Order ${orderData.items} <br> (Total: GH₵${orderData.total})`
-                        },
-                        headings: {
-                            en: "New Order Received"
-                        },
-                        subtitle: {
-                            en: `Placed at ${orderData.timestamp}`
-                        },
-                        data: {
-                            orderId: orderData.orderId,
-                            type: "new_order"
-                        },
-                        ios_badgeType: "Increase",
-                        ios_badgeCount: 1
-                    })
-                });
-    
-                if (response.ok) {
-                    console.log("Notification sent successfully");
-                    showNotification("Order notification sent!", "success");
-                } else {
-                    const errorData = await response.json();
-                    console.error("Failed to send notification:", errorData);
-                    showNotification("Failed to send notification.", "error");
-                }
-            } catch (error) {
-                console.error("Error sending notification:", error);
-                showNotification("Error sending notification.", "error");
-            }
+        showNotification("Order marked as being delivered!");
+    } catch (error) {
+        console.error("Error marking order as being delivered:", error);
+        showNotification("Failed to update order status.", "error");
+    }
+}
+
+document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
+document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
+document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
+document.getElementById("undo-btn").addEventListener("click", undoDelete);
+document.getElementById("add-size-btn").addEventListener("click", () => {
+    const name = prompt("Enter size name (e.g., Large):");
+    if (!name) return;
+    const price = prompt("Enter extra price for this size (e.g., 5.00):");
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+        showNotification("Please enter a valid price.", "error");
+        return;
+    }
+    addOption("size", name.trim(), parsedPrice);
+});
+document.getElementById("add-extra-btn").addEventListener("click", () => {
+    const name = prompt("Enter extra name (e.g., Extra Cheese):");
+    if (!name) return;
+    const price = prompt("Enter price for this extra (e.g., 2.00):");
+    const parsedPrice = parseFloat(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+        showNotification("Please enter a valid price.", "error");
+        return;
+    }
+    addOption("extra", name.trim(), parsedPrice);
+});
+document.getElementById("menu-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("menu-name").value.trim();
+    const price = parseFloat(document.getElementById("menu-price").value);
+    const form = document.getElementById("menu-form");
+    const mode = form.dataset.mode;
+    const sizeList = document.getElementById("size-list");
+    const extraList = document.getElementById("extra-list");
+
+    if (!validateForm(name, price)) return;
+
+    const sizes = Array.from(sizeList.querySelectorAll(".option-item")).map(item => {
+        const text = item.querySelector("p").textContent;
+        return {
+            name: text.split(" (")[0],
+            price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
+        };
+    });
+    const extras = Array.from(extraList.querySelectorAll(".option-item")).map(item => {
+        const text = item.querySelector("p").textContent;
+        return {
+            name: text.split(" (")[0],
+            price: parseFloat(text.match(/GH₵([\d.]+)/)[1]),
+        };
+    });
+
+    try {
+        if (mode === "add") {
+            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras });
+            showNotification("Dish added successfully!", "success");
+        } else if (mode === "edit") {
+            const menuId = form.dataset.id;
+            await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras });
+            showNotification("Dish updated successfully!", "success");
         }
-    
-        function loadOrders() {
-            if (!restaurantId) return;
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const order = change.doc.data();
-                        const orderId = change.doc.id;
-                        if (order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered") {
-                            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                            sendNewOrderNotification({
-                                restaurantId: restaurantId,
-                                orderId: orderId,
-                                items: items,
-                                total: subtotal.toFixed(2),
-                                timestamp: new Date(order.timestamp).toLocaleString(),
-                                externalUserId: auth.currentUser.email // Use vendor's email
-                            });
-                        }
-                    }
-                });
-                const orders = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const fragment = document.createDocumentFragment();
-                orders.forEach(order => {
+        closeSection();
+        loadMenu();
+    } catch (error) {
+        console.error(`Error ${mode === "add" ? "adding" : "updating"} dish:`, error);
+        showNotification(`Failed to ${mode === "add" ? "add" : "update"} dish.`, "error");
+    }
+});
+document.querySelectorAll(".toggle-btn").forEach(btn => {
+    btn.addEventListener("click", () => toggleOptionGroup(btn));
+});
+document.getElementById("menu-form").addEventListener("input", () => {
+    hasUnsavedChanges = true;
+});
+
+async function sendNewOrderNotification(orderData) {
+    const ONESIGNAL_APP_ID = "bd22b221-3f13-4105-977e-330f65419187"; // Your OneSignal App ID
+    const ONESIGNAL_API_KEY = "os_v2_app_xurleij7cnaqlf36gmhwkqmrq5xi3ibmde4ebr5fajo2s4a4zyrhtxoxwqcr7jm7bnn74jjkg5wvyamrdhggq4wrglmxioypqsw2jka"; // Your OneSignal REST API Key
+
+    try {
+        const response = await fetch("https://onesignal.com/api/v1/notifications", {
+            method: "POST",
+            headers: {
+                "Authorization": `Basic ${ONESIGNAL_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                app_id: ONESIGNAL_APP_ID,
+                include_external_user_ids: [orderData.externalUserId], // Vendor email
+                contents: {
+                    en: `New Order: ${orderData.items} (Total: GH₵${orderData.total})`
+                },
+                headings: {
+                    en: "New Order Received"
+                },
+                subtitle: {
+                    en: `Placed at ${orderData.timestamp}`
+                },
+                data: {
+                    orderId: orderData.orderId,
+                    type: "new_order"
+                },
+                ios_badgeType: "Increase",
+                ios_badgeCount: 1
+            })
+        });
+
+        if (response.ok) {
+            console.log("Notification sent successfully");
+            showNotification("Order notification sent!", "success");
+        } else {
+            const errorData = await response.json();
+            console.error("Failed to send notification:", errorData);
+            showNotification("Failed to send notification.", "error");
+        }
+    } catch (error) {
+        console.error("Error sending notification:", error);
+        showNotification("Error sending notification.", "error");
+    }
+}
+
+function loadOrders() {
+    if (!restaurantId) return;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const order = change.doc.data();
+                const orderId = change.doc.id;
+                // Only notify for new orders that haven't been processed
+                if (
+                    !processedOrderIds.has(orderId) &&
+                    order.status !== "being_delivered" &&
+                    order.status !== "delivered" &&
+                    order.status !== "not_delivered"
+                ) {
                     const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const deliveryDetails = order.deliveryDetails || {};
                     const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    const item = document.createElement("div");
-                    item.className = "orders-item";
-                    item.innerHTML = `
-                        <div class="order-summary cursor-pointer">
-                            <p class="font-bold text-lg text-white">Items: ${items}</p>
-                            <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
-                            <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                            <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
-                        </div>
-                        <div class="order-details hidden mt-2">
-                            <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
-                            <p><strong>Order ID:</strong> ${order.id}</p>
-                            <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                            <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
-                            <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                            <p><strong>Note:</strong> ${order.note || "None"}</p>
-                        </div>
-                    `;
-                    item.querySelector(".order-summary").addEventListener("click", () => {
-                        const details = item.querySelector(".order-details");
-                        details.classList.toggle("hidden");
+                    sendNewOrderNotification({
+                        restaurantId: restaurantId,
+                        orderId: orderId,
+                        items: items,
+                        total: subtotal.toFixed(2),
+                        timestamp: new Date(order.timestamp).toLocaleString(),
+                        externalUserId: auth.currentUser.email // Use vendor's email
                     });
-                    fragment.appendChild(item);
-                });
-                ordersList.innerHTML = "";
-                ordersList.appendChild(fragment);
-                if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
-                ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
-            });
-        }
-    
-        function loadDeliveredOrders() {
-            if (!restaurantId) return;
-            const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-            onSnapshot(q, (snapshot) => {
-                const orders = snapshot.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(order => order.status === "delivered" || order.status === "not_delivered" || order.status === "being_delivered")
-                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                const fragment = document.createDocumentFragment();
-                orders.forEach(order => {
-                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const deliveryDetails = order.deliveryDetails || {};
-                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    const statusText = order.status === "delivered" ? "Delivered" : order.status === "not_delivered" ? "Not Delivered" : "In Transit";
-                    const statusColor = order.status === "delivered" ? "#34c759" : order.status === "not_delivered" ? "#ff3b30" : "#f59e0b";
-                    const item = document.createElement("div");
-                    item.className = "orders-item";
-                    item.innerHTML = `
-                        <div class="order-summary cursor-pointer">
-                            <p class="font-bold text-lg text-white">Items: ${items}</p>
-                            <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
-                            <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                            <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${statusText}</p>
-                        </div>
-                        <div class="order-details hidden mt-2">
-                            <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
-                            <p><strong>Order ID:</strong> ${order.id}</p>
-                            <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                            <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
-                            <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                            <p><strong>Note:</strong> ${order.note || "None"}</p>
-                            <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
-                            <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                        </div>
-                    `;
-                    item.querySelector(".order-summary").addEventListener("click", () => {
-                        const details = item.querySelector(".order-details");
-                        details.classList.toggle("hidden");
-                    });
-                    fragment.appendChild(item);
-                });
-                deliveredList.innerHTML = "";
-                deliveredList.appendChild(fragment);
-                if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
-            });
-        }
-    
-        document.getElementById("store-form").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const name = document.getElementById("store-name").value;
-            const image = document.getElementById("store-image").value;
-            await setDoc(doc(db, "restaurant", restaurantId), { name, image }, { merge: true });
-            showNotification("Store updated successfully!");
-            loadRestaurantData();
-        });
-    
-        document.getElementById("open-shop-btn").addEventListener("click", async () => {
-            await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
-            showNotification("Shop opened!");
-            loadRestaurantData();
-        });
-    
-        document.getElementById("close-shop-btn").addEventListener("click", async () => {
-            await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
-            showNotification("Shop closed!");
-            loadRestaurantData();
-        });
-    
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const mappingRef = doc(db, "vendorMappings", user.email);
-                const mappingSnap = await getDoc(mappingRef);
-                if (mappingSnap.exists()) {
-                    restaurantId = mappingSnap.data().restaurantId;
-                    loadingScreen.style.display = "none";
-                    loginSection.style.display = "none";
-                    mainContent.classList.remove("hidden");
-                    OneSignal.push(function() {
-                        OneSignal.setExternalUserId(user.email);
-                        console.log("OneSignal external user ID set:", user.email);
-                    });
-                    Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
-                } else {
-                    signOut(auth);
-                    loadingScreen.style.display = "none";
-                    loginSection.style.display = "flex";
-                    mainContent.classList.add("hidden");
-                    showLoginNotification("No restaurant assigned to this email!", "error");
+                    processedOrderIds.add(orderId); // Mark order as processed
                 }
-            } else {
-                loadingScreen.style.display = "none";
-                loginSection.style.display = "flex";
-                mainContent.classList.add("hidden");
-                restaurantId = null;
-                OneSignal.push(function() {
-                    OneSignal.removeExternalUserId();
-                    console.log("OneSignal external user ID removed");
-                });
-                setTimeout(() => {
-                    if (document.getElementById("login-notification")) {
-                        showLoginNotification("Please enter your login details", "info");
-                    }
-                }, 1000);
             }
         });
-    
-        document.getElementById("login-form").addEventListener("submit", async function(e) {
-            e.preventDefault();
-            const emailInput = document.getElementById("email");
-            const passwordInput = document.getElementById("password");
-            const loginButton = document.getElementById("login-btn");
-            const spinner = document.getElementById("login-spinner");
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
-            emailInput.classList.remove("error");
-            passwordInput.classList.remove("error");
-            let isValid = true;
-            if (!email) {
-                showLoginNotification("Email address is required", "error");
-                emailInput.classList.add("error");
-                isValid = false;
-            } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-                showLoginNotification("Invalid email format", "error");
-                emailInput.classList.add("error");
-                isValid = false;
-            }
-            if (!password) {
-                showLoginNotification("Password is required", "error");
-                passwordInput.classList.add("error");
-                isValid = false;
-            } else if (password.length < 6) {
-                showLoginNotification("Password must be at least 6 characters", "warning");
-                passwordInput.classList.add("error");
-                isValid = false;
-            }
-            if (!isValid) return;
-            loginButton.disabled = true;
-            spinner.style.display = "block";
-            loginButton.querySelector("span").textContent = "Signing in...";
-            showLoginNotification("Logging in...", "info");
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-            } catch (error) {
-                let errorMessage = "Wrong email or password. Please try again.";
-                switch (error.code) {
-                    case "auth/user-not-found":
-                        errorMessage = "No account found with this email address.";
-                        emailInput.classList.add("error");
-                        break;
-                    case "auth/wrong-password":
-                        errorMessage = "Incorrect password. Please try again.";
-                        passwordInput.classList.add("error");
-                        passwordInput.value = "";
-                        passwordInput.focus();
-                        break;
-                    case "auth/too-many-requests":
-                        errorMessage = "Too many failed attempts. Please try again later.";
-                        break;
-                    case "auth/network-request-failed":
-                        errorMessage = "Network error. Please check your connection.";
-                        break;
-                }
-                showLoginNotification(errorMessage, "error");
-                loginButton.disabled = false;
-                spinner.style.display = "none";
-                loginButton.querySelector("span").textContent = "Sign In";
-            }
-        });
-    
-        document.getElementById("toggle-password").addEventListener("click", function() {
-            const passwordInput = document.getElementById("password");
-            const icon = this.querySelector("i");
-            if (passwordInput.type === "password") {
-                passwordInput.type = "text";
-                icon.classList.remove("fa-eye");
-                icon.classList.add("fa-eye-slash");
-            } else {
-                passwordInput.type = "password";
-                icon.classList.remove("fa-eye-slash");
-                icon.classList.add("fa-eye");
-            }
-        });
-    
-        function showLoginNotification(message, type = "error") {
-            const notification = document.getElementById("login-notification");
-            if (!notification) return;
-            if (window.loginNotificationTimer) {
-                clearTimeout(window.loginNotificationTimer);
-            }
-            notification.innerHTML = `
-                <i class="fas ${type === "error" ? "fa-exclamation-circle" : 
-                                type === "warning" ? "fa-exclamation-triangle" : 
-                                type === "info" ? "fa-info-circle" : "fa-check-circle"}"></i>
-                <span>${message}</span>
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const fragment = document.createDocumentFragment();
+        orders.forEach(order => {
+            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+            const deliveryDetails = order.deliveryDetails || {};
+            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const item = document.createElement("div");
+            item.className = "orders-item";
+            item.innerHTML = `
+                <div class="order-summary cursor-pointer">
+                    <p class="font-bold text-lg text-white">Items: ${items}</p>
+                    <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
+                    <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
+                    <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+                </div>
+                <div class="order-details hidden mt-2">
+                    <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
+                    <p><strong>Order ID:</strong> ${order.id}</p>
+                    <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                    <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
+                    <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                    <p><strong>Note:</strong> ${order.note || "None"}</p>
+                </div>
             `;
-            notification.className = "notification";
-            notification.classList.add(type);
-            void notification.offsetWidth;
-            notification.style.opacity = "1";
-            notification.style.visibility = "visible";
-            notification.style.transform = "translateY(0)";
-            window.loginNotificationTimer = setTimeout(() => {
-                notification.style.opacity = "0";
-                notification.style.transform = "translateY(-10px)";
-                setTimeout(() => {
-                    notification.style.visibility = "hidden";
-                }, 300);
-            }, 4000);
-        }
-    
-        function preloadResources() {
-            const urls = [
-                "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
-                "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
-                "https://cdn.onesignal.com/sdks/OneSignalSDK.js"
-            ];
-            urls.forEach(url => {
-                const link = document.createElement("link");
-                link.rel = "preload";
-                link.as = "style";
-                link.href = url;
-                document.head.appendChild(link);
+            item.querySelector(".order-summary").addEventListener("click", () => {
+                const details = item.querySelector(".order-details");
+                details.classList.toggle("hidden");
             });
-        }
-    
-        preloadResources();
-    
-        function setupNavigation() {
-            const navButtons = [
-                { id: "store-btn", section: "store", load: loadDashboard },
-                { id: "manage-menu-btn", section: "manage-menu", load: loadMenu },
-                { id: "view-orders-btn", section: "view-orders", load: loadOrders },
-                { id: "delivered-btn", section: "delivered", load: loadDeliveredOrders },
-                { id: "settings-btn", section: "settings", load: null }
-            ];
-            navButtons.forEach(({ id, section, load }) => {
-                const button = document.getElementById(id);
-                if (button) {
-                    button.addEventListener("click", () => {
-                        toggleSection(section);
-                        if (load) load();
-                    });
-                }
+            fragment.appendChild(item);
+        });
+        ordersList.innerHTML = "";
+        ordersList.appendChild(fragment);
+        if (!orders.length) ordersList.innerHTML = "<p class='text-gray-400'>No pending orders.</p>";
+        ordersList.querySelectorAll(".mark-delivered-btn").forEach(btn => btn.addEventListener("click", () => markOrderAsBeingDelivered(btn.dataset.orderId)));
+    });
+}
+
+function loadDeliveredOrders() {
+    if (!restaurantId) return;
+    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    onSnapshot(q, (snapshot) => {
+        const orders = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(order => order.status === "delivered" || order.status === "not_delivered" || order.status === "being_delivered")
+            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        const fragment = document.createDocumentFragment();
+        orders.forEach(order => {
+            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+            const deliveryDetails = order.deliveryDetails || {};
+            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const statusText = order.status === "delivered" ? "Delivered" : order.status === "not_delivered" ? "Not Delivered" : "In Transit";
+            const statusColor = order.status === "delivered" ? "#34c759" : order.status === "not_delivered" ? "#ff3b30" : "#f59e0b";
+            const item = document.createElement("div");
+            item.className = "orders-item";
+            item.innerHTML = `
+                <div class="order-summary cursor-pointer">
+                    <p class="font-bold text-lg text-white">Items: ${items}</p>
+                    <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
+                    <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
+                    <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${statusText}</p>
+                </div>
+                <div class="order-details hidden mt-2">
+                    <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
+                    <p><strong>Order ID:</strong> ${order.id}</p>
+                    <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
+                    <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
+                    <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                    <p><strong>Note:</strong> ${order.note || "None"}</p>
+                    <p><strong>Delivery Note:</strong> ${deliveryDetails.deliveryNotes || "None"}</p>
+                    <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
+                </div>
+            `;
+            item.querySelector(".order-summary").addEventListener("click", () => {
+                const details = item.querySelector(".order-details");
+                details.classList.toggle("hidden");
             });
-        }
-    
-        document.getElementById("logout-btn").addEventListener("click", async () => {
-            await signOut(auth);
+            fragment.appendChild(item);
+        });
+        deliveredList.innerHTML = "";
+        deliveredList.appendChild(fragment);
+        if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
+    });
+}
+
+document.getElementById("store-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("store-name").value;
+    const image = document.getElementById("store-image").value;
+    await setDoc(doc(db, "restaurant", restaurantId), { name, image }, { merge: true });
+    showNotification("Store updated successfully!");
+    loadRestaurantData();
+});
+
+document.getElementById("open-shop-btn").addEventListener("click", async () => {
+    await setDoc(doc(db, "restaurant", restaurantId), { isOpen: true }, { merge: true });
+    showNotification("Shop opened!");
+    loadRestaurantData();
+});
+
+document.getElementById("close-shop-btn").addEventListener("click", async () => {
+    await setDoc(doc(db, "restaurant", restaurantId), { isOpen: false }, { merge: true });
+    showNotification("Shop closed!");
+    loadRestaurantData();
+});
+
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        const mappingRef = doc(db, "vendorMappings", user.email);
+        const mappingSnap = await getDoc(mappingRef);
+        if (mappingSnap.exists()) {
+            restaurantId = mappingSnap.data().restaurantId;
+            loadingScreen.style.display = "none";
+            loginSection.style.display = "none";
+            mainContent.classList.remove("hidden");
             OneSignal.push(function() {
-                OneSignal.removeExternalUserId();
-                console.log("OneSignal external user ID removed");
+                OneSignal.setExternalUserId(user.email);
+                console.log("OneSignal external user ID set:", user.email);
             });
-            showNotification("Logged out successfully!", "success");
+            Promise.all([loadRestaurantData(), loadMenu(), loadOrders(), loadDeliveredOrders(), loadDashboard()]);
+        } else {
+            signOut(auth);
+            loadingScreen.style.display = "none";
+            loginSection.style.display = "flex";
+            mainContent.classList.add("hidden");
+            showLoginNotification("No restaurant assigned to this email!", "error");
+        }
+    } else {
+        loadingScreen.style.display = "none";
+        loginSection.style.display = "flex";
+        mainContent.classList.add("hidden");
+        restaurantId = null;
+        OneSignal.push(function() {
+            OneSignal.removeExternalUserId();
+            console.log("OneSignal external user ID removed");
         });
-    
-        document.getElementById("refresh-app-btn").addEventListener("click", () => {
-            if ("caches" in window) {
-                caches.keys().then(names => {
-                    names.forEach(name => caches.delete(name));
-                });
+        setTimeout(() => {
+            if (document.getElementById("login-notification")) {
+                showLoginNotification("Please enter your login details", "info");
             }
-            location.reload(true);
-            showNotification("App refreshed!", "success");
+        }, 1000);
+    }
+});
+
+document.getElementById("login-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const loginButton = document.getElementById("login-btn");
+    const spinner = document.getElementById("login-spinner");
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    emailInput.classList.remove("error");
+    passwordInput.classList.remove("error");
+    let isValid = true;
+    if (!email) {
+        showLoginNotification("Email address is required", "error");
+        emailInput.classList.add("error");
+        isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        showLoginNotification("Invalid email format", "error");
+        emailInput.classList.add("error");
+        isValid = false;
+    }
+    if (!password) {
+        showLoginNotification("Password is required", "error");
+        passwordInput.classList.add("error");
+        isValid = false;
+    } else if (password.length < 6) {
+        showLoginNotification("Password must be at least 6 characters", "warning");
+        passwordInput.classList.add("error");
+        isValid = false;
+    }
+    if (!isValid) return;
+    loginButton.disabled = true;
+    spinner.style.display = "block";
+    loginButton.querySelector("span").textContent = "Signing in...";
+    showLoginNotification("Logging in...", "info");
+    try {
+        await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+        let errorMessage = "Wrong email or password. Please try again.";
+        switch (error.code) {
+            case "auth/user-not-found":
+                errorMessage = "No account found with this email address.";
+                emailInput.classList.add("error");
+                break;
+            case "auth/wrong-password":
+                errorMessage = "Incorrect password. Please try again.";
+                passwordInput.classList.add("error");
+                passwordInput.value = "";
+                passwordInput.focus();
+                break;
+            case "auth/too-many-requests":
+                errorMessage = "Too many failed attempts. Please try again later.";
+                break;
+            case "auth/network-request-failed":
+                errorMessage = "Network error. Please check your connection.";
+                break;
+        }
+        showLoginNotification(errorMessage, "error");
+        loginButton.disabled = false;
+        spinner.style.display = "none";
+        loginButton.querySelector("span").textContent = "Sign In";
+    }
+});
+
+document.getElementById("toggle-password").addEventListener("click", function() {
+    const passwordInput = document.getElementById("password");
+    const icon = this.querySelector("i");
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        passwordInput.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+});
+
+function showLoginNotification(message, type = "error") {
+    const notification = document.getElementById("login-notification");
+    if (!notification) return;
+    if (window.loginNotificationTimer) {
+        clearTimeout(window.loginNotificationTimer);
+    }
+    notification.innerHTML = `
+        <i class="fas ${type === "error" ? "fa-exclamation-circle" : 
+                        type === "warning" ? "fa-exclamation-triangle" : 
+                        type === "info" ? "fa-info-circle" : "fa-check-circle"}"></i>
+        <span>${message}</span>
+    `;
+    notification.className = "notification";
+    notification.classList.add(type);
+    void notification.offsetWidth;
+    notification.style.opacity = "1";
+    notification.style.visibility = "visible";
+    notification.style.transform = "translateY(0)";
+    window.loginNotificationTimer = setTimeout(() => {
+        notification.style.opacity = "0";
+        notification.style.transform = "translateY(-10px)";
+        setTimeout(() => {
+            notification.style.visibility = "hidden";
+        }, 300);
+    }, 4000);
+}
+
+function preloadResources() {
+    const urls = [
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
+        "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
+        "https://cdn.onesignal.com/sdks/OneSignalSDK.js"
+    ];
+    urls.forEach(url => {
+        const link = document.createElement("link");
+        link.rel = "preload";
+        link.as = "style";
+        link.href = url;
+        document.head.appendChild(link);
+    });
+}
+
+preloadResources();
+
+function setupNavigation() {
+    const navButtons = [
+        { id: "store-btn", section: "store", load: loadDashboard },
+        { id: "manage-menu-btn", section: "manage-menu", load: loadMenu },
+        { id: "view-orders-btn", section: "view-orders", load: loadOrders },
+        { id: "delivered-btn", section: "delivered", load: loadDeliveredOrders },
+        { id: "settings-btn", section: "settings", load: null }
+    ];
+    navButtons.forEach(({ id, section, load }) => {
+        const button = document.getElementById(id);
+        if (button) {
+            button.addEventListener("click", () => {
+                toggleSection(section);
+                if (load) load();
+            });
+        }
+    });
+}
+
+document.getElementById("logout-btn").addEventListener("click", async () => {
+    await signOut(auth);
+    OneSignal.push(function() {
+        OneSignal.removeExternalUserId();
+        console.log("OneSignal external user ID removed");
+    });
+    showNotification("Logged out successfully!", "success");
+});
+
+document.getElementById("refresh-app-btn").addEventListener("click", () => {
+    if ("caches" in window) {
+        caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
         });
-    
-        document.addEventListener("DOMContentLoaded", () => {
-            setupNavigation();
-        });
+    }
+    location.reload(true);
+    showNotification("App refreshed!", "success");
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    setupNavigation();
+});
     </script>
 
     <script>
