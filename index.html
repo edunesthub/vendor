@@ -1068,9 +1068,6 @@ const db = getFirestore(app);
 const auth = getAuth(app);
 let restaurantId = null;
 
-// Track processed order IDs to prevent duplicate notifications
-const processedOrderIds = new Set();
-
 const loadingScreen = document.getElementById("loading-screen");
 const loginSection = document.getElementById("login-section");
 const mainContent = document.getElementById("main-content");
@@ -1452,6 +1449,19 @@ async function markOrderAsBeingDelivered(orderId) {
     }
 }
 
+// Manage processed order IDs in localStorage
+function manageProcessedOrders(orderId, action) {
+    const key = `processedOrderIds_${restaurantId}`;
+    let orderIds = JSON.parse(localStorage.getItem(key) || "[]");
+    
+    if (action === "add" && !orderIds.includes(orderId)) {
+        orderIds.push(orderId);
+        localStorage.setItem(key, JSON.stringify(orderIds));
+    } else if (action === "check") {
+        return orderIds.includes(orderId);
+    }
+}
+
 document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
 document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
 document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
@@ -1528,8 +1538,8 @@ document.getElementById("menu-form").addEventListener("input", () => {
 });
 
 async function sendNewOrderNotification(orderData) {
-    const ONESIGNAL_APP_ID = "bd22b221-3f13-4105-977e-330f65419187"; // Your OneSignal App ID
-    const ONESIGNAL_API_KEY = "os_v2_app_xurleij7cnaqlf36gmhwkqmrq5xi3ibmde4ebr5fajo2s4a4zyrhtxoxwqcr7jm7bnn74jjkg5wvyamrdhggq4wrglmxioypqsw2jka"; // Your OneSignal REST API Key
+    const ONESIGNAL_APP_ID = "bd22b221-3f13-4105-977e-330f65419187";
+    const ONESIGNAL_API_KEY = "os_v2_app_xurleij7cnaqlf36gmhwkqmrq5xi3ibmde4ebr5fajo2s4a4zyrhtxoxwqcr7jm7bnn74jjkg5wvyamrdhggq4wrglmxioypqsw2jka";
 
     try {
         const response = await fetch("https://onesignal.com/api/v1/notifications", {
@@ -1540,7 +1550,7 @@ async function sendNewOrderNotification(orderData) {
             },
             body: JSON.stringify({
                 app_id: ONESIGNAL_APP_ID,
-                include_external_user_ids: [orderData.externalUserId], // Vendor email
+                include_external_user_ids: [orderData.externalUserId],
                 contents: {
                     en: `New Order: ${orderData.items} (Total: GH₵${orderData.total})`
                 },
@@ -1560,16 +1570,15 @@ async function sendNewOrderNotification(orderData) {
         });
 
         if (response.ok) {
-            console.log("Notification sent successfully");
-            showNotification("Order notification sent!", "success");
+            console.log("Notification sent successfully for order:", orderData.orderId);
+            // Mark order as processed
+            manageProcessedOrders(orderData.orderId, "add");
         } else {
             const errorData = await response.json();
             console.error("Failed to send notification:", errorData);
-            showNotification("Failed to send notification.", "error");
         }
     } catch (error) {
         console.error("Error sending notification:", error);
-        showNotification("Error sending notification.", "error");
     }
 }
 
@@ -1583,7 +1592,7 @@ function loadOrders() {
                 const orderId = change.doc.id;
                 // Only notify for new orders that haven't been processed
                 if (
-                    !processedOrderIds.has(orderId) &&
+                    !manageProcessedOrders(orderId, "check") &&
                     order.status !== "being_delivered" &&
                     order.status !== "delivered" &&
                     order.status !== "not_delivered"
@@ -1596,9 +1605,8 @@ function loadOrders() {
                         items: items,
                         total: subtotal.toFixed(2),
                         timestamp: new Date(order.timestamp).toLocaleString(),
-                        externalUserId: auth.currentUser.email // Use vendor's email
+                        externalUserId: auth.currentUser.email
                     });
-                    processedOrderIds.add(orderId); // Mark order as processed
                 }
             }
         });
