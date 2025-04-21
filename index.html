@@ -1539,7 +1539,7 @@
                         app_id: ONESIGNAL_APP_ID,
                         include_external_user_ids: [orderData.externalUserId], // Vendor email
                         contents: {
-                            en: `New Order #${orderData.orderId}: ${orderData.items} (Total: GH₵${orderData.total})`
+                            en: `New Order ${orderData.items} <br> (Total: GH₵${orderData.total})`
                         },
                         headings: {
                             en: "New Order Received"
