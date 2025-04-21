@@ -1067,6 +1067,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 let restaurantId = null;
+let orderListenerUnsubscribe = null; // Track onSnapshot listener
 
 const loadingScreen = document.getElementById("loading-screen");
 const loginSection = document.getElementById("login-section");
@@ -1462,6 +1463,19 @@ function manageProcessedOrders(orderId, action) {
     }
 }
 
+// Debounce function to prevent rapid notification triggers
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
 document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
 document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
@@ -1584,30 +1598,45 @@ async function sendNewOrderNotification(orderData) {
 
 function loadOrders() {
     if (!restaurantId) return;
+    // Unsubscribe existing listener if it exists
+    if (orderListenerUnsubscribe) {
+        orderListenerUnsubscribe();
+        orderListenerUnsubscribe = null;
+    }
     const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
+    // Debounced notification handler
+    const debouncedNotify = debounce((order, orderId, items, subtotal, timestamp, email) => {
+        if (
+            !manageProcessedOrders(orderId, "check") &&
+            order.status !== "being_delivered" &&
+            order.status !== "delivered" &&
+            order.status !== "not_delivered"
+        ) {
+            sendNewOrderNotification({
+                restaurantId: restaurantId,
+                orderId: orderId,
+                items: items,
+                total: subtotal.toFixed(2),
+                timestamp: timestamp,
+                externalUserId: email
+            });
+        }
+    }, 500);
+    orderListenerUnsubscribe = onSnapshot(q, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
             if (change.type === "added") {
                 const order = change.doc.data();
                 const orderId = change.doc.id;
-                // Only notify for new orders that haven't been processed
-                if (
-                    !manageProcessedOrders(orderId, "check") &&
-                    order.status !== "being_delivered" &&
-                    order.status !== "delivered" &&
-                    order.status !== "not_delivered"
-                ) {
-                    const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                    const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-                    sendNewOrderNotification({
-                        restaurantId: restaurantId,
-                        orderId: orderId,
-                        items: items,
-                        total: subtotal.toFixed(2),
-                        timestamp: new Date(order.timestamp).toLocaleString(),
-                        externalUserId: auth.currentUser.email
-                    });
-                }
+                const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+                const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                debouncedNotify(
+                    order,
+                    orderId,
+                    items,
+                    subtotal,
+                    new Date(order.timestamp).toLocaleString(),
+                    auth.currentUser.email
+                );
             }
         });
         const orders = snapshot.docs
