@@ -1127,7 +1127,7 @@ function toggleSection(sectionId) {
         const button = document.getElementById(`${id}-btn`);
         if (section && button) {
             section.classList.toggle("hidden", id !== sectionId);
-            button.classList.toggle("active", id === sectionId);
+            button.classList.toggle("active", id !== sectionId);
         } else if (section) {
             section.classList.toggle("hidden", id !== sectionId);
         }
@@ -1604,6 +1604,8 @@ function loadOrders() {
         orderListenerUnsubscribe = null;
     }
     const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+    // Flag to skip initial snapshot
+    let isInitialSnapshot = true;
     // Debounced notification handler
     const debouncedNotify = debounce((order, orderId, items, subtotal, timestamp, email) => {
         if (
@@ -1624,7 +1626,7 @@ function loadOrders() {
     }, 500);
     orderListenerUnsubscribe = onSnapshot(q, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
+            if (change.type === "added" && !isInitialSnapshot) {
                 const order = change.doc.data();
                 const orderId = change.doc.id;
                 const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
@@ -1639,6 +1641,10 @@ function loadOrders() {
                 );
             }
         });
+        // After processing the initial snapshot, allow real-time notifications
+        if (isInitialSnapshot) {
+            isInitialSnapshot = false;
+        }
         const orders = snapshot.docs
             .map(doc => ({ id: doc.id, ...doc.data() }))
             .filter(order => order.status !== "being_delivered" && order.status !== "delivered" && order.status !== "not_delivered")
