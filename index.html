@@ -1660,7 +1660,7 @@ function loadOrders() {
                     <p class="font-bold text-lg text-white">Items: ${items}</p>
                     <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
                     <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                     <p><strong>Note:</strong> ${deliveryDetails.note || "None"}</p>
+                     <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
                     <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
                 </div>
                 <div class="order-details hidden mt-2">
