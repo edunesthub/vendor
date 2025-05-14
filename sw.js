@@ -9,7 +9,7 @@ const urlsToCache = [
   "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js",
   "https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;500;700&display=swap",
   "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
-  "/img/icon-192x192.png",
+  "/img/icon-192x192.png"
 ];
 
 // Install event: Cache essential files
