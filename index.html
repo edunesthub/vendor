@@ -979,6 +979,14 @@
                         <span id="menu-name-error" class="error-message"></span>
                     </div>
                     <div class="form-group">
+  <label for="menu-category" class="form-label">Category</label>
+  <select id="menu-category" class="input">
+    <option value="">-- Select Category --</option>
+  </select>
+  <button type="button" id="add-category-btn" class="btn btn-add" style="margin-top: 0.75rem;">+ Add New Category</button>
+</div>
+
+                    <div class="form-group">
                         <label for="menu-price" class="form-label">Base Price (GH₵)</label>
                         <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
                         <span id="menu-price-error" class="error-message"></span>
@@ -1225,23 +1233,41 @@ async function loadMenu() {
             menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
             return;
         }
-        querySnapshot.forEach(docSnapshot => {
-            const data = docSnapshot.data();
-            const item = document.createElement("div");
-            item.className = "menu-item";
-            const hasOptions = (data.sizes?.length > 0) || (data.extras?.length > 0);
-            item.innerHTML = `
-                <div>
-                    <h4>${data.name}</h4>
-                    <p>GH₵${data.price.toFixed(2)}</p>
-                </div>
-                <div class="menu-item-actions">
-                    <button class="btn btn-edit edit-dish-btn" data-id="${docSnapshot.id}">Edit</button>
-                    <button class="btn btn-secondary delete-dish-btn" data-id="${docSnapshot.id}">Delete</button>
-                </div>
-            `;
-            menuList.appendChild(item);
-        });
+        const grouped = {};
+querySnapshot.forEach(docSnapshot => {
+  const data = docSnapshot.data();
+  const category = data.category || "Uncategorized";
+  if (!grouped[category]) grouped[category] = [];
+  grouped[category].push({ id: docSnapshot.id, ...data });
+});
+
+menuList.innerHTML = "";
+
+Object.entries(grouped).forEach(([category, items]) => {
+  const heading = document.createElement("h3");
+  heading.textContent = category;
+  heading.style.marginTop = "1.5rem";
+  heading.style.fontWeight = "600";
+  heading.style.color = "#ccc";
+  menuList.appendChild(heading);
+
+  items.forEach(data => {
+    const item = document.createElement("div");
+    item.className = "menu-item";
+    item.innerHTML = `
+      <div>
+        <h4>${data.name}</h4>
+        <p>GH₵${data.price.toFixed(2)}</p>
+      </div>
+      <div class="menu-item-actions">
+        <button class="btn btn-edit edit-dish-btn" data-id="${data.id}">Edit</button>
+        <button class="btn btn-secondary delete-dish-btn" data-id="${data.id}">Delete</button>
+      </div>
+    `;
+    menuList.appendChild(item);
+  });
+});
+
 
         document.querySelectorAll(".edit-dish-btn").forEach(btn => {
             btn.addEventListener("click", () => openEditSection(btn.dataset.id));
@@ -1278,10 +1304,27 @@ function openAddSection() {
     section.classList.add("show");
     section.classList.remove("hidden");
     nameInput.focus();
+    loadCategories();
     undoBtn.classList.add("hidden");
     hasUnsavedChanges = false;
     clearErrors();
 }
+
+async function loadCategories() {
+  const select = document.getElementById("menu-category");
+  if (!select) return;
+  select.innerHTML = `<option value="">-- Select Category --</option>`;
+  const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
+  const snapshot = await getDocs(categoriesRef);
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const option = document.createElement("option");
+    option.value = data.name;
+    option.textContent = data.name;
+    select.appendChild(option);
+  });
+}
+
 
 async function openEditSection(menuId) {
     try {
@@ -1322,6 +1365,9 @@ async function openEditSection(menuId) {
             section.classList.add("show");
             section.classList.remove("hidden");
             nameInput.focus();
+            await loadCategories();
+document.getElementById("menu-category").value = data.category || "";
+
             undoBtn.classList.add("hidden");
             hasUnsavedChanges = false;
             clearErrors();
@@ -1483,6 +1529,34 @@ function debounce(func, wait) {
     };
 }
 
+document.getElementById("add-category-btn").addEventListener("click", async () => {
+  const name = prompt("Enter new category name:");
+  if (!name || !name.trim()) return showNotification("Category name cannot be empty.", "error");
+
+  try {
+    const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
+    
+    // Check for duplicate names
+    const existing = await getDocs(query(categoriesRef, where("name", "==", name.trim())));
+    if (!existing.empty) {
+      showNotification("This category already exists.", "warning");
+      return;
+    }
+
+    await addDoc(categoriesRef, {
+      name: name.trim(),
+      createdAt: new Date()
+    });
+
+    showNotification("Category added successfully!");
+    loadCategories(); // Refresh dropdown
+  } catch (error) {
+    console.error("Error adding category:", error);
+    showNotification("Failed to add category.", "error");
+  }
+});
+
+
 document.getElementById("add-dish-btn").addEventListener("click", openAddSection);
 document.getElementById("cancel-dish-btn").addEventListener("click", closeSection);
 document.getElementById("menu-edit-close-btn").addEventListener("click", closeSection);
@@ -1514,6 +1588,8 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
     const name = document.getElementById("menu-name").value.trim();
     const price = parseFloat(document.getElementById("menu-price").value);
     const form = document.getElementById("menu-form");
+    const category = document.getElementById("menu-category").value.trim();
+
     const mode = form.dataset.mode;
     const sizeList = document.getElementById("size-list");
     const extraList = document.getElementById("extra-list");
@@ -1537,11 +1613,12 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
 
     try {
         if (mode === "add") {
-            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras });
+            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras, category });
+
             showNotification("Dish added successfully!", "success");
         } else if (mode === "edit") {
             const menuId = form.dataset.id;
-            await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras });
+            await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras, category });
             showNotification("Dish updated successfully!", "success");
         }
         closeSection();
