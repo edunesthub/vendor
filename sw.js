@@ -1,4 +1,4 @@
-const CACHE_NAME = "vendor-portal-cache-v18";
+const CACHE_NAME = "vendor-portal-cache-v19";
 const urlsToCache = [
   "/",
   "/index.html",
@@ -11,6 +11,8 @@ const urlsToCache = [
   "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css",
   "/img/icon-192x192.png"
 ];
+
+importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");
 
 // Install event: Cache essential files
 self.addEventListener("install", (event) => {

@@ -1099,20 +1099,27 @@ const deliveredList = document.getElementById("delivered-list");
 const dashboardGrid = document.getElementById("dashboard-grid");
 
 window.OneSignal = window.OneSignal || [];
-OneSignal.push(function() {
-    OneSignal.init({
-        appId: "bd22b221-3f13-4105-977e-330f65419187",
-        allowLocalhostAsSecureOrigin: true,
-        notifyButton: {
-            enable: false,
-        }
-    });
-    OneSignal.showNativePrompt();
-    OneSignal.on("notificationOpened", function(event) {
-        toggleSection("view-orders");
-        loadOrders();
-    });
+OneSignal.push(function () {
+  OneSignal.init({
+    appId: "bd22b221-3f13-4105-977e-330f65419187",
+    allowLocalhostAsSecureOrigin: true,
+    serviceWorkerPath: "/sw.js",
+    serviceWorkerParam: { scope: "/" },
+    notifyButton: {
+      enable: false,
+    },
+  });
+
+  // Show native browser prompt
+  OneSignal.showNativePrompt();
+
+  // On notification click
+  OneSignal.on("notificationOpened", function (event) {
+    toggleSection("view-orders");
+    loadOrders();
+  });
 });
+
 
 function showNotification(message, type = "success") {
     const notification = document.getElementById("notification");
@@ -2034,12 +2041,6 @@ document.getElementById("toggle-password").addEventListener("click", () => {
     <script>
         if ("serviceWorker" in navigator) {
             window.addEventListener("load", () => {
-                // Register OneSignal service worker
-                navigator.serviceWorker.register("/OneSignalSDKWorker.js").then(registration => {
-                    console.log("OneSignal ServiceWorker registration successful");
-                }).catch(err => {
-                    console.log("OneSignal ServiceWorker registration failed: ", err);
-                });
                 // Register custom service worker
                 navigator.serviceWorker.register("/sw.js").then(registration => {
                     console.log("Custom ServiceWorker registration successful");
