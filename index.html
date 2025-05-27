@@ -1414,7 +1414,7 @@ async function editCategory(categoryId, oldName) {
   try {
     const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
 
-    // If name changed, check for duplicates
+    // Check for name conflict
     if (newName.trim() !== oldName) {
       const querySnap = await getDocs(query(categoriesRef, where("name", "==", newName.trim())));
       if (!querySnap.empty) {
@@ -1423,16 +1423,32 @@ async function editCategory(categoryId, oldName) {
       }
     }
 
-    await updateDoc(doc(db, "restaurant", restaurantId, "categories", categoryId), {
+    // 1. Update the category name document
+    await updateDoc(doc(categoriesRef, categoryId), {
       name: newName.trim(),
       sortOrder: newOrder
     });
 
-    showNotification("Category updated successfully!");
+    // 2. Update all menu items with oldName
+    const menuRef = collection(db, "restaurant", restaurantId, "menu");
+    const menuQuery = query(menuRef, where("category", "==", oldName));
+    const menuSnap = await getDocs(menuQuery);
+
+    const batchUpdates = menuSnap.docs.map(docSnap => 
+      updateDoc(doc(db, "restaurant", restaurantId, "menu", docSnap.id), {
+        category: newName.trim()
+      })
+    );
+
+    await Promise.all(batchUpdates);
+
+    showNotification("Category and associated items updated successfully!");
     loadCategoriesView();
     loadCategories();
+    loadMenu();
+
   } catch (error) {
-    console.error("Error updating category:", error);
+    console.error("Error updating category and items:", error);
     showNotification("Failed to update category.", "error");
   }
 }
@@ -1750,14 +1766,81 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
 
     try {
         if (mode === "add") {
-await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras, category, orderNumber });
-            showNotification("Dish added successfully!", "success");
-        } else if (mode === "edit") {
-            const menuId = form.dataset.id;
-await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras, category, orderNumber });
-            showNotification("Dish updated successfully!", "success");
-        }
-        closeSection();
+  // Fetch category sortOrder
+  let categoryOrder = 9999;
+  try {
+    const catRef = collection(db, "restaurant", restaurantId, "categories");
+    const q = query(catRef, where("name", "==", category));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      categoryOrder = snapshot.docs[0].data().sortOrder ?? 9999;
+    }
+  } catch (err) {
+    console.warn("Could not fetch category order:", err);
+  }
+
+  await addDoc(collection(db, "restaurant", restaurantId, "menu"), {
+    name,
+    price,
+    sizes,
+    extras,
+    category,
+    categoryOrder,
+    orderNumber
+  });
+  showNotification("Dish added successfully!", "success");
+}
+ else if (mode === "edit") {
+  let categoryOrder = 9999;
+  try {
+    const catRef = collection(db, "restaurant", restaurantId, "categories");
+    const q = query(catRef, where("name", "==", category));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      categoryOrder = snapshot.docs[0].data().sortOrder ?? 9999;
+    }
+  } catch (err) {
+    console.warn("Could not fetch category order:", err);
+  }
+
+  const menuId = form.dataset.id;
+  await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), {
+    name,
+    price,
+    sizes,
+    extras,
+    category,
+    categoryOrder,
+    orderNumber
+  });
+  showNotification("Dish updated successfully!", "success");
+}
+else if (mode === "edit") {
+  let categoryOrder = 9999;
+  try {
+    const catRef = collection(db, "restaurant", restaurantId, "categories");
+    const q = query(catRef, where("name", "==", category));
+    const snapshot = await getDocs(q);
+    if (!snapshot.empty) {
+      categoryOrder = snapshot.docs[0].data().sortOrder ?? 9999;
+    }
+  } catch (err) {
+    console.warn("Could not fetch category order:", err);
+  }
+
+  const menuId = form.dataset.id;
+  await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), {
+    name,
+    price,
+    sizes,
+    extras,
+    category,
+    categoryOrder,
+    orderNumber
+  });
+  showNotification("Dish updated successfully!", "success");
+}
+       closeSection();
         loadMenu();
     } catch (error) {
         console.error(`Error ${mode === "add" ? "adding" : "updating"} dish:`, error);
