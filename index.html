@@ -1495,7 +1495,10 @@ async function openEditSection(menuId) {
                     </div>
                 `).join("")
                 : "";
-                document.getElementById("menu-order-number").value = data.orderNumber ?? "";
+document.getElementById("menu-name").value = data.name || "";
+document.getElementById("menu-price").value = data.price || "";
+document.getElementById("menu-category").value = data.category || "";
+document.getElementById("menu-order-number").value = data.orderNumber ?? '';
 
             extraList.innerHTML = data.extras?.length
                 ? data.extras.map((extra, index) => `
