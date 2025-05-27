@@ -1,0 +1,75 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 🔥 Publicly readable menu data, write only if authenticated
+    match /restaurant/{restaurantId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+
+      match /menu/{menuId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+
+      match /categories/{categoryId} {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+    }
+
+    // ✅ Delivery Mapping: Admin-only write, self-read
+    match /deliveryMapping/{email} {
+      allow read: if request.auth != null &&
+        (request.auth.token.email == email || request.auth.token.email in ["admin@gmail.com"]);
+      allow write: if request.auth != null &&
+        request.auth.token.email in ["admin@gmail.com"];
+    }
+
+    // ✅ Vendor Mapping: Admin-only
+    match /vendorMappings/{email} {
+      allow read, write: if request.auth != null &&
+        request.auth.token.email in ["admin@gmail.com"];
+    }
+
+    // ✅ Orders: Authenticated users only
+    match /orders/{orderId} {
+     allow read, write: if true
+    }
+
+    // ✅ Cart: User-specific access
+    match /cart/{cartId} {
+      allow read, write: if request.auth != null && request.auth.uid == cartId;
+    }
+
+    // ✅ Users collection: Read all, write own
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ✅ Delivery Fees: Public read, no write
+    match /deliveryFees/{document=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ✅ Admin flags
+    match /admins/{email} {
+      allow read: if request.auth != null && request.auth.token.email == email;
+      allow write: if false;
+    }
+
+    // ✅ Subscriptions (payments, plans, etc.)
+    match /subscriptions/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ✅ Settings
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        request.auth.token.email in ["admin@gmail.com"];
+    }
+  }
+}

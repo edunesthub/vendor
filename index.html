@@ -967,10 +967,17 @@
             <div id="menu-list" class="menu-list"></div>
         </div>
 
-        <div id="categories-section" class="menu-list hidden">
-  <h3 class="text-xl font-semibold text-center my-4">Categories</h3>
-  <div id="category-list"></div>
+        <div id="categories-section" class="menu-edit-section hidden">
+  <div class="menu-edit-container">
+    <div class="menu-edit-header">
+      <h3>Categories</h3>
+      <button class="menu-edit-close-btn" id="close-categories-btn" aria-label="Close categories">×</button>
+    </div>
+    <div id="category-list" class="menu-list"></div>
+    <button id="add-category-btn-2" class="btn btn-add">+ Add New Category</button>
+  </div>
 </div>
+
 
         <div id="menu-edit-section" class="menu-edit-section hidden">
             <div class="menu-edit-container">
@@ -1337,6 +1344,63 @@ async function loadCategories() {
     option.textContent = data.name;
     select.appendChild(option);
   });
+}
+
+async function loadCategoriesView() {
+  const list = document.getElementById("category-list");
+  list.innerHTML = "<p class='text-gray-400'>Loading categories...</p>";
+  const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
+  const snapshot = await getDocs(categoriesRef);
+  list.innerHTML = "";
+
+  if (snapshot.empty) {
+    list.innerHTML = "<p class='text-gray-400'>No categories added yet.</p>";
+    return;
+  }
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    const item = document.createElement("div");
+    item.className = "menu-item";
+    item.innerHTML = `
+      <h4>${data.name}</h4>
+      <div class="menu-item-actions">
+        <button class="btn btn-edit" onclick="editCategory('${docSnap.id}', '${data.name}')">Edit</button>
+        <button class="btn btn-secondary" onclick="deleteCategory('${docSnap.id}')">Delete</button>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+async function editCategory(categoryId, oldName) {
+  const newName = prompt("Enter new name for the category:", oldName);
+  if (!newName || newName.trim() === "") {
+    showNotification("Category name cannot be empty.", "error");
+    return;
+  }
+  if (newName.trim() === oldName) return; // No change
+
+  try {
+    // Check if the name already exists
+    const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
+    const querySnap = await getDocs(query(categoriesRef, where("name", "==", newName.trim())));
+    if (!querySnap.empty) {
+      showNotification("Another category with this name already exists.", "warning");
+      return;
+    }
+
+    await updateDoc(doc(db, "restaurant", restaurantId, "categories", categoryId), {
+      name: newName.trim()
+    });
+
+    showNotification("Category updated successfully!");
+    loadCategoriesView();
+    loadCategories(); // Update dropdowns too
+  } catch (error) {
+    console.error("Error editing category:", error);
+    showNotification("Failed to update category.", "error");
+  }
 }
 
 
@@ -1886,6 +1950,7 @@ onAuthStateChanged(auth, async (user) => {
         const mappingSnap = await getDoc(mappingRef);
         if (mappingSnap.exists()) {
             restaurantId = mappingSnap.data().restaurantId;
+               loadCategoriesView();
             loadingScreen.style.display = "none";
             loginSection.style.display = "none";
             mainContent.classList.remove("hidden");
@@ -2028,6 +2093,17 @@ document.getElementById("manage-menu-btn").addEventListener("click", () => toggl
 document.getElementById("view-orders-btn").addEventListener("click", () => toggleSection("view-orders"));
 document.getElementById("delivered-btn").addEventListener("click", () => toggleSection("delivered"));
 document.getElementById("settings-btn").addEventListener("click", () => toggleSection("settings"));
+// CATEGORY MODAL BEHAVIOR
+document.getElementById("view-categories-btn").addEventListener("click", () => {
+  document.getElementById("categories-section").classList.add("show");
+  document.getElementById("categories-section").classList.remove("hidden");
+  loadCategoriesView();
+});
+document.getElementById("close-categories-btn").addEventListener("click", () => {
+  const section = document.getElementById("categories-section");
+  section.classList.remove("show");
+  setTimeout(() => section.classList.add("hidden"), 300);
+});
 
 document.getElementById("toggle-password").addEventListener("click", () => {
     const passwordInput = document.getElementById("password");
@@ -2036,6 +2112,11 @@ document.getElementById("toggle-password").addEventListener("click", () => {
     passwordInput.type = isPassword ? "text" : "password";
     toggleBtn.innerHTML = `<i class="fas ${isPassword ? "fa-eye-slash" : "fa-eye"}"></i>`;
 });
+
+// Expose functions to the global scope
+window.editCategory = editCategory;
+window.deleteCategory = deleteCategory;
+
     </script>
 
     <script>
