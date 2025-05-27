@@ -1005,7 +1005,11 @@
                         <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
                         <span id="menu-price-error" class="error-message"></span>
                     </div>
-                    
+                    <div class="form-group">
+  <label for="menu-order-number" class="form-label">Display Order Number</label>
+  <input type="number" id="menu-order-number" class="input" placeholder="e.g., 1" min="0">
+</div>
+
                     <div class="option-group" id="sizes-group">
                         <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="size-list">Sizes <i class="fas fa-chevron-down"></i></button>
                         <div id="size-list" class="option-list hidden"></div>
@@ -1274,6 +1278,12 @@ Object.entries(grouped).forEach(([category, items]) => {
   heading.style.color = "#ccc";
   menuList.appendChild(heading);
 
+  items.sort((a, b) => {
+    const aOrder = a.orderNumber ?? 9999;
+    const bOrder = b.orderNumber ?? 9999;
+    return aOrder - bOrder;
+  });
+
   items.forEach(data => {
     const item = document.createElement("div");
     item.className = "menu-item";
@@ -1469,6 +1479,8 @@ async function openEditSection(menuId) {
                     </div>
                 `).join("")
                 : "";
+                document.getElementById("menu-order-number").value = data.orderNumber ?? "";
+
             extraList.innerHTML = data.extras?.length
                 ? data.extras.map((extra, index) => `
                     <div class="option-item" data-index="${index}">
@@ -1710,6 +1722,8 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const name = document.getElementById("menu-name").value.trim();
     const price = parseFloat(document.getElementById("menu-price").value);
+    const orderNumber = parseInt(document.getElementById("menu-order-number").value, 10);
+
     const form = document.getElementById("menu-form");
     const category = document.getElementById("menu-category").value.trim();
 
@@ -1736,12 +1750,11 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
 
     try {
         if (mode === "add") {
-            await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras, category });
-
+await addDoc(collection(db, "restaurant", restaurantId, "menu"), { name, price, sizes, extras, category, orderNumber });
             showNotification("Dish added successfully!", "success");
         } else if (mode === "edit") {
             const menuId = form.dataset.id;
-            await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras, category });
+await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), { name, price, sizes, extras, category, orderNumber });
             showNotification("Dish updated successfully!", "success");
         }
         closeSection();
