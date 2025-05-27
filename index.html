@@ -1005,6 +1005,7 @@
                         <input type="number" id="menu-price" class="input" placeholder="e.g., 25.00" step="0.01" min="0" required aria-describedby="menu-price-error">
                         <span id="menu-price-error" class="error-message"></span>
                     </div>
+                    
                     <div class="option-group" id="sizes-group">
                         <button type="button" class="toggle-btn" aria-expanded="false" aria-controls="size-list">Sizes <i class="fas fa-chevron-down"></i></button>
                         <div id="size-list" class="option-list hidden"></div>
@@ -1074,8 +1075,9 @@
     <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
 import { 
-    getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, onSnapshot
+  getFirestore, doc, setDoc, getDoc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, where, orderBy, onSnapshot 
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
 import { 
     getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
@@ -1350,27 +1352,39 @@ async function loadCategoriesView() {
   const list = document.getElementById("category-list");
   list.innerHTML = "<p class='text-gray-400'>Loading categories...</p>";
   const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
-  const snapshot = await getDocs(categoriesRef);
-  list.innerHTML = "";
 
-  if (snapshot.empty) {
-    list.innerHTML = "<p class='text-gray-400'>No categories added yet.</p>";
-    return;
+  try {
+    const snapshot = await getDocs(categoriesRef);
+    const docs = snapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+    docs.sort((a, b) => {
+      const aOrder = a.sortOrder ?? 9999;
+      const bOrder = b.sortOrder ?? 9999;
+      return aOrder - bOrder;
+    });
+
+    list.innerHTML = "";
+
+    if (!docs.length) {
+      list.innerHTML = "<p class='text-gray-400'>No categories added yet.</p>";
+      return;
+    }
+
+    docs.forEach(data => {
+      const item = document.createElement("div");
+      item.className = "menu-item";
+      item.innerHTML = `
+        <h4>${data.name} <span style="color:gray;">#${data.sortOrder ?? "?"}</span></h4>
+        <div class="menu-item-actions">
+          <button class="btn btn-edit" onclick="editCategory('${data.id}', '${data.name}')">Edit</button>
+          <button class="btn btn-secondary" onclick="deleteCategory('${data.id}')">Delete</button>
+        </div>
+      `;
+      list.appendChild(item);
+    });
+  } catch (error) {
+    console.error("Error loading categories:", error);
+    showNotification("Could not load categories.", "error");
   }
-
-  snapshot.forEach(docSnap => {
-    const data = docSnap.data();
-    const item = document.createElement("div");
-    item.className = "menu-item";
-    item.innerHTML = `
-      <h4>${data.name}</h4>
-      <div class="menu-item-actions">
-        <button class="btn btn-edit" onclick="editCategory('${docSnap.id}', '${data.name}')">Edit</button>
-        <button class="btn btn-secondary" onclick="deleteCategory('${docSnap.id}')">Delete</button>
-      </div>
-    `;
-    list.appendChild(item);
-  });
 }
 
 async function editCategory(categoryId, oldName) {
@@ -1379,27 +1393,52 @@ async function editCategory(categoryId, oldName) {
     showNotification("Category name cannot be empty.", "error");
     return;
   }
-  if (newName.trim() === oldName) return; // No change
+
+  const newOrderInput = prompt("Enter new sort order number (e.g., 1 for top):");
+  const newOrder = parseInt(newOrderInput, 10);
+  if (isNaN(newOrder)) {
+    showNotification("Invalid sort order.", "error");
+    return;
+  }
 
   try {
-    // Check if the name already exists
     const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
-    const querySnap = await getDocs(query(categoriesRef, where("name", "==", newName.trim())));
-    if (!querySnap.empty) {
-      showNotification("Another category with this name already exists.", "warning");
-      return;
+
+    // If name changed, check for duplicates
+    if (newName.trim() !== oldName) {
+      const querySnap = await getDocs(query(categoriesRef, where("name", "==", newName.trim())));
+      if (!querySnap.empty) {
+        showNotification("Another category with this name already exists.", "warning");
+        return;
+      }
     }
 
     await updateDoc(doc(db, "restaurant", restaurantId, "categories", categoryId), {
-      name: newName.trim()
+      name: newName.trim(),
+      sortOrder: newOrder
     });
 
     showNotification("Category updated successfully!");
     loadCategoriesView();
-    loadCategories(); // Update dropdowns too
+    loadCategories();
   } catch (error) {
-    console.error("Error editing category:", error);
+    console.error("Error updating category:", error);
     showNotification("Failed to update category.", "error");
+  }
+}
+
+
+async function deleteCategory(categoryId) {
+  if (!confirm("Are you sure you want to delete this category?")) return;
+
+  try {
+    await deleteDoc(doc(db, "restaurant", restaurantId, "categories", categoryId));
+    showNotification("Category deleted successfully!", "success");
+    loadCategoriesView(); // Refresh category list
+    loadCategories();     // Refresh dropdowns
+  } catch (error) {
+    console.error("Error deleting category:", error);
+    showNotification("Failed to delete category.", "error");
   }
 }
 
@@ -1607,31 +1646,37 @@ function debounce(func, wait) {
     };
 }
 
-document.getElementById("add-category-btn").addEventListener("click", async () => {
-  const name = prompt("Enter new category name:");
-  if (!name || !name.trim()) return showNotification("Category name cannot be empty.", "error");
+document.querySelectorAll("#add-category-btn, #add-category-btn-2").forEach(button => {
+  button.addEventListener("click", async () => {
+    const name = prompt("Enter new category name:");
+    if (!name || !name.trim()) return showNotification("Category name cannot be empty.", "error");
 
-  try {
-    const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
-    
-    // Check for duplicate names
-    const existing = await getDocs(query(categoriesRef, where("name", "==", name.trim())));
-    if (!existing.empty) {
-      showNotification("This category already exists.", "warning");
-      return;
+    const sortOrderInput = prompt("Enter a sort order number (e.g., 1 for top):");
+    const sortOrder = parseInt(sortOrderInput, 10);
+    if (isNaN(sortOrder)) return showNotification("Invalid sort order number.", "error");
+
+    try {
+      const categoriesRef = collection(db, "restaurant", restaurantId, "categories");
+      const existing = await getDocs(query(categoriesRef, where("name", "==", name.trim())));
+      if (!existing.empty) {
+        showNotification("This category already exists.", "warning");
+        return;
+      }
+
+      await addDoc(categoriesRef, {
+        name: name.trim(),
+        sortOrder,
+        createdAt: new Date()
+      });
+
+      showNotification("Category added successfully!");
+      loadCategories();
+      loadCategoriesView();
+    } catch (error) {
+      console.error("Error adding category:", error);
+      showNotification("Failed to add category.", "error");
     }
-
-    await addDoc(categoriesRef, {
-      name: name.trim(),
-      createdAt: new Date()
-    });
-
-    showNotification("Category added successfully!");
-    loadCategories(); // Refresh dropdown
-  } catch (error) {
-    console.error("Error adding category:", error);
-    showNotification("Failed to add category.", "error");
-  }
+  });
 });
 
 
