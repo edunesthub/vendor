@@ -2052,28 +2052,31 @@ function loadOrders() {
 
         const fragment = document.createDocumentFragment();
         orders.forEach(order => {
-            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-            const deliveryDetails = order.deliveryDetails || {};
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const item = document.createElement("div");
-            item.className = "orders-item";
-            item.innerHTML = `
-                <div class="order-summary cursor-pointer">
-                    <p class="font-bold text-lg text-white">Items: ${items}</p>
-                    <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
-                    <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                     <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
-                    <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
-                </div>
-                <div class="order-details hidden mt-2">
-                    <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
-                    <p><strong>Order ID:</strong> ${order.id}</p>
-                    <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                    <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
-                    <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                   
-                </div>
-            `;
+            const items = (order.cart || order.items || []).map(item => `${item.quantity}x ${item.name}`).join(", ");
+const deliveryDetails = order.deliveryDetails || {};
+const subtotal = (order.cart || order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
+const orderTime = (order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp)).toLocaleString();
+
+const item = document.createElement("div");
+item.className = "orders-item";
+item.innerHTML = `
+    <div class="order-summary cursor-pointer">
+        <p class="font-bold text-lg text-white">Items: ${items}</p>
+        <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
+        <p class="font-bold text-lg text-white">Time: ${orderTime}</p>
+        <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
+        <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
+        <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
+    </div>
+    <div class="order-details hidden mt-2">
+        <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
+        <p><strong>Order ID:</strong> ${order.id}</p>
+        <p><strong>Time:</strong> ${orderTime}</p>
+        <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
+        <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
+    </div>
+`;
+
             item.querySelector(".order-summary").addEventListener("click", (e) => {
                 if (!e.target.classList.contains("mark-delivered-btn")) {
                     const details = item.querySelector(".order-details");
@@ -2090,8 +2093,8 @@ function loadOrders() {
             if (change.type === "added") {
                 const order = change.doc.data();
                 const orderId = change.doc.id;
-                const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
-                const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                const items = (order.cart || order.items || []).map(item => `${item.quantity}x ${item.name}`).join(", ");
+                const subtotal = (order.cart || order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
                 debouncedNotify(
                     order,
                     orderId,
@@ -2133,9 +2136,9 @@ function loadDeliveredOrders() {
             .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         const fragment = document.createDocumentFragment();
         orders.forEach(order => {
-            const items = order.items.map(item => `${item.quantity}x ${item.name}`).join(", ");
+            const items = (order.cart || order.items || []).map(item => `${item.quantity}x ${item.name}`).join(", ");
             const deliveryDetails = order.deliveryDetails || {};
-            const subtotal = order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const subtotal = (order.cart || order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
             const statusText = order.status === "delivered" ? "Delivered" : order.status === "not_delivered" ? "Not Delivered" : "In Transit";
             const statusColor = order.status === "delivered" ? "#34c759" : order.status === "not_delivered" ? "#ff3b30" : "#f59e0b";
             const item = document.createElement("div");

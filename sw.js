@@ -1,4 +1,4 @@
-const CACHE_NAME = "vendor-portal-cache-v20";
+const CACHE_NAME = "vendor-portal-cache-v21";
 const urlsToCache = [
   "/",
   "/index.html",
