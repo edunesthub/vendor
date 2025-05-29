@@ -894,6 +894,50 @@
                 justify-content: flex-end;
             }
         }
+        .toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+  margin: 0 0.5rem;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  background-color: #555;
+  transition: 0.3s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: #34c759;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(18px);
+}
+
     </style>
 </head>
 <body>
@@ -1233,6 +1277,32 @@ async function loadDashboard() {
     });
 }
 
+async function ensureVisibilityFields() {
+  const menuRef = collection(db, "restaurant", restaurantId, "menu");
+  const menuSnap = await getDocs(menuRef);
+  const menuUpdates = menuSnap.docs.map(docSnap => {
+    const data = docSnap.data();
+    if (typeof data.visible === "undefined") {
+      return updateDoc(doc(db, "restaurant", restaurantId, "menu", docSnap.id), { visible: true });
+    }
+    return Promise.resolve();
+  });
+
+  const catRef = collection(db, "restaurant", restaurantId, "categories");
+  const catSnap = await getDocs(catRef);
+  const catUpdates = catSnap.docs.map(docSnap => {
+    const data = docSnap.data();
+    if (typeof data.visible === "undefined") {
+      return updateDoc(doc(db, "restaurant", restaurantId, "categories", docSnap.id), { visible: true });
+    }
+    return Promise.resolve();
+  });
+
+  await Promise.all([...menuUpdates, ...catUpdates]);
+  console.log("Visibility fields ensured.");
+}
+
+
 async function loadRestaurantData() {
     if (!restaurantId) return;
     const docRef = doc(db, "restaurant", restaurantId);
@@ -1250,70 +1320,82 @@ async function loadRestaurantData() {
 }
 
 async function loadMenu() {
-    if (!restaurantId) return;
-    menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
-    try {
-        const menuRef = collection(db, "restaurant", restaurantId, "menu");
-        const querySnapshot = await getDocs(menuRef);
-        menuList.innerHTML = "";
-        if (querySnapshot.empty) {
-            menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
-            return;
-        }
-        const grouped = {};
-querySnapshot.forEach(docSnapshot => {
-  const data = docSnapshot.data();
-  const category = data.category || "Uncategorized";
-  if (!grouped[category]) grouped[category] = [];
-  grouped[category].push({ id: docSnapshot.id, ...data });
-});
+  if (!restaurantId) return;
+  menuList.innerHTML = "<p class='text-gray-400'>Loading menu...</p>";
+  try {
+    const menuRef = collection(db, "restaurant", restaurantId, "menu");
+    const querySnapshot = await getDocs(menuRef);
+    menuList.innerHTML = "";
 
-menuList.innerHTML = "";
-
-Object.entries(grouped).forEach(([category, items]) => {
-  const heading = document.createElement("h3");
-  heading.textContent = category;
-  heading.style.marginTop = "1.5rem";
-  heading.style.fontWeight = "600";
-  heading.style.color = "#ccc";
-  menuList.appendChild(heading);
-
-  items.sort((a, b) => {
-    const aOrder = a.orderNumber ?? 9999;
-    const bOrder = b.orderNumber ?? 9999;
-    return aOrder - bOrder;
-  });
-
-  items.forEach(data => {
-    const item = document.createElement("div");
-    item.className = "menu-item";
-    item.innerHTML = `
-      <div>
-        <h4>${data.name}</h4>
-        <p>GH₵${data.price.toFixed(2)}</p>
-      </div>
-      <div class="menu-item-actions">
-        <button class="btn btn-edit edit-dish-btn" data-id="${data.id}">Edit</button>
-        <button class="btn btn-secondary delete-dish-btn" data-id="${data.id}">Delete</button>
-      </div>
-    `;
-    menuList.appendChild(item);
-  });
-});
-
-
-        document.querySelectorAll(".edit-dish-btn").forEach(btn => {
-            btn.addEventListener("click", () => openEditSection(btn.dataset.id));
-        });
-        document.querySelectorAll(".delete-dish-btn").forEach(btn => {
-            btn.addEventListener("click", () => deleteMenuItem(btn.dataset.id));
-        });
-    } catch (error) {
-        console.error("Error loading menu:", error);
-        menuList.innerHTML = "<p class='text-gray-400'>Error loading menu. Please try again.</p>";
-        showNotification("Failed to load menu.", "error");
+    if (querySnapshot.empty) {
+      menuList.innerHTML = "<p class='text-gray-400'>No dishes added yet. Add one above!</p>";
+      return;
     }
+
+    const grouped = {};
+    querySnapshot.forEach(docSnapshot => {
+      const data = docSnapshot.data();
+      const category = data.category || "Uncategorized";
+      if (!grouped[category]) grouped[category] = [];
+      grouped[category].push({ id: docSnapshot.id, ...data });
+    });
+
+    Object.entries(grouped).forEach(([category, items]) => {
+      const heading = document.createElement("h3");
+      heading.textContent = category;
+      heading.style.marginTop = "1.5rem";
+      heading.style.fontWeight = "600";
+      heading.style.color = "#ccc";
+      menuList.appendChild(heading);
+
+      items.sort((a, b) => {
+        const aOrder = a.orderNumber ?? 9999;
+        const bOrder = b.orderNumber ?? 9999;
+        return aOrder - bOrder;
+      });
+
+      items.forEach(data => {
+        const item = document.createElement("div");
+        item.className = "menu-item";
+        item.innerHTML = `
+          <div class="flex justify-between items-start w-full">
+            <h4 style="margin: 0;">${data.name}</h4>
+            <label class="toggle-switch">
+              <input type="checkbox" ${data.visible !== false ? "checked" : ""}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <p style="margin: 0.25rem 0 0.75rem;">GH₵${data.price.toFixed(2)}</p>
+          <div class="menu-item-actions">
+            <button class="btn btn-edit edit-dish-btn" data-id="${data.id}">Edit</button>
+            <button class="btn btn-secondary delete-dish-btn" data-id="${data.id}">Delete</button>
+          </div>
+        `;
+
+        menuList.appendChild(item);
+
+        const toggleInput = item.querySelector("input[type='checkbox']");
+        if (toggleInput) {
+          toggleInput.addEventListener("change", async (e) => {
+            await updateDoc(doc(db, "restaurant", restaurantId, "menu", data.id), {
+              visible: e.target.checked
+            });
+            showNotification(`"${data.name}" is now ${e.target.checked ? "visible" : "hidden"}.`);
+          });
+        }
+
+        item.querySelector(".edit-dish-btn").addEventListener("click", () => openEditSection(data.id));
+        item.querySelector(".delete-dish-btn").addEventListener("click", () => deleteMenuItem(data.id));
+      });
+    });
+
+  } catch (error) {
+    console.error("Error loading menu:", error);
+    menuList.innerHTML = "<p class='text-gray-400'>Error loading menu. Please try again.</p>";
+    showNotification("Failed to load menu.", "error");
+  }
 }
+
 
 let lastDeletedOption = null;
 let hasUnsavedChanges = false;
@@ -1389,6 +1471,27 @@ async function loadCategoriesView() {
           <button class="btn btn-secondary" onclick="deleteCategory('${data.id}')">Delete</button>
         </div>
       `;
+      const toggle = document.createElement("label");
+toggle.innerHTML = `
+  <div class="toggle-switch">
+    <input type="checkbox" id="toggle-${data.id}" ${data.visible !== false ? "checked" : ""}>
+    <span class="toggle-slider"></span>
+  </div>
+`;
+toggle.style.display = "flex";
+toggle.style.flexDirection = "column";
+toggle.style.alignItems = "center";
+toggle.style.marginRight = "1rem";
+
+toggle.querySelector("input").addEventListener("change", async (e) => {
+  await updateDoc(doc(db, "restaurant", restaurantId, "categories", data.id), {
+    visible: e.target.checked
+  });
+  showNotification(`Category "${data.name}" is now ${e.target.checked ? "visible" : "hidden"}.`);
+});
+
+item.querySelector(".menu-item-actions").prepend(toggle);
+
       list.appendChild(item);
     });
   } catch (error) {
@@ -2094,7 +2197,8 @@ onAuthStateChanged(auth, async (user) => {
         const mappingSnap = await getDoc(mappingRef);
         if (mappingSnap.exists()) {
             restaurantId = mappingSnap.data().restaurantId;
-               loadCategoriesView();
+await ensureVisibilityFields(); // ✅ Make sure visible: true is set
+loadCategoriesView();
             loadingScreen.style.display = "none";
             loginSection.style.display = "none";
             mainContent.classList.remove("hidden");
