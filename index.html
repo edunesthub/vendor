@@ -1921,31 +1921,6 @@ document.getElementById("menu-form").addEventListener("submit", async (e) => {
   });
   showNotification("Dish updated successfully!", "success");
 }
-else if (mode === "edit") {
-  let categoryOrder = 9999;
-  try {
-    const catRef = collection(db, "restaurant", restaurantId, "categories");
-    const q = query(catRef, where("name", "==", category));
-    const snapshot = await getDocs(q);
-    if (!snapshot.empty) {
-      categoryOrder = snapshot.docs[0].data().sortOrder ?? 9999;
-    }
-  } catch (err) {
-    console.warn("Could not fetch category order:", err);
-  }
-
-  const menuId = form.dataset.id;
-  await updateDoc(doc(db, "restaurant", restaurantId, "menu", menuId), {
-    name,
-    price,
-    sizes,
-    extras,
-    category,
-    categoryOrder,
-    orderNumber
-  });
-  showNotification("Dish updated successfully!", "success");
-}
        closeSection();
         loadMenu();
     } catch (error) {
@@ -2052,7 +2027,16 @@ function loadOrders() {
 
         const fragment = document.createDocumentFragment();
         orders.forEach(order => {
-            const items = (order.cart || order.items || []).map(item => `${item.quantity}x ${item.name}`).join(", ");
+const itemsList = (order.cart || order.items || []);
+const mergedItemsMap = {};
+itemsList.forEach(item => {
+  if (mergedItemsMap[item.name]) {
+    mergedItemsMap[item.name] += item.quantity;
+  } else {
+    mergedItemsMap[item.name] = item.quantity;
+  }
+});
+const mergedItems = Object.entries(mergedItemsMap).map(([name, qty]) => `${qty}x ${name}`).join("<br>");
 const deliveryDetails = order.deliveryDetails || {};
 const subtotal = (order.cart || order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
 const orderTime = (order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp)).toLocaleString();
@@ -2061,7 +2045,7 @@ const item = document.createElement("div");
 item.className = "orders-item";
 item.innerHTML = `
     <div class="order-summary cursor-pointer">
-        <p class="font-bold text-lg text-white">Items: ${items}</p>
+<p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
         <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
         <p class="font-bold text-lg text-white">Time: ${orderTime}</p>
         <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
@@ -2145,7 +2129,7 @@ function loadDeliveredOrders() {
             item.className = "orders-item";
             item.innerHTML = `
                 <div class="order-summary cursor-pointer">
-                    <p class="font-bold text-lg text-white">Items: ${items}</p>
+<p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
                     <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
                     <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
                       <p><strong>Note:</strong> ${deliveryDetails.note || "None"}</p>
