@@ -2046,18 +2046,16 @@ item.className = "orders-item";
 item.innerHTML = `
     <div class="order-summary cursor-pointer">
 <p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
-        <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
-        <p class="font-bold text-lg text-white">Time: ${orderTime}</p>
-        <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
+        <p class="font-bold text-lg text-white"> ${deliveryDetails.hostel || "Not provided"}, Room ${deliveryDetails.location || "Not provided"}</p>
         <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
+        <p class="text-lg text-white">Time: ${orderTime}</p>
+        <p class=" text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
         <button class="btn btn-delivered mark-delivered-btn" data-order-id="${order.id}">Mark as Being Delivered</button>
     </div>
     <div class="order-details hidden mt-2">
         <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
         <p><strong>Order ID:</strong> ${order.id}</p>
-        <p><strong>Time:</strong> ${orderTime}</p>
-        <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
-        <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
+                  <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
     </div>
 `;
 
@@ -2111,50 +2109,70 @@ function handleMarkDelivered(e) {
 }
 
 function loadDeliveredOrders() {
-    if (!restaurantId) return;
-    const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
-    onSnapshot(q, (snapshot) => {
-        const orders = snapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(order => order.status === "delivered" || order.status === "not_delivered" || order.status === "being_delivered")
-            .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        const fragment = document.createDocumentFragment();
-        orders.forEach(order => {
-            const items = (order.cart || order.items || []).map(item => `${item.quantity}x ${item.name}`).join(", ");
-            const deliveryDetails = order.deliveryDetails || {};
-            const subtotal = (order.cart || order.items || []).reduce((sum, item) => sum + item.price * item.quantity, 0);
-            const statusText = order.status === "delivered" ? "Delivered" : order.status === "not_delivered" ? "Not Delivered" : "In Transit";
-            const statusColor = order.status === "delivered" ? "#34c759" : order.status === "not_delivered" ? "#ff3b30" : "#f59e0b";
-            const item = document.createElement("div");
-            item.className = "orders-item";
-            item.innerHTML = `
-                <div class="order-summary cursor-pointer">
-<p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
-                    <p class="font-bold text-lg text-white">Hostel: ${deliveryDetails.hostel || "Not provided"}, Room: ${deliveryDetails.location || "Not provided"}</p>
-                    <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
-                      <p><strong>Note:</strong> ${deliveryDetails.note || "None"}</p>
-                    <p class="font-bold text-lg" style="color: ${statusColor}">Status: ${statusText}</p>
-                </div>
-                <div class="order-details hidden mt-2">
-                    <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
-                    <p><strong>Order ID:</strong> ${order.id}</p>
-                    <p><strong>Time:</strong> ${new Date(order.timestamp).toLocaleString()}</p>
-                    <p><strong>Hostel:</strong> ${deliveryDetails.hostel || "Not provided"}</p>
-                    <p><strong>Room:</strong> ${deliveryDetails.location || "Not provided"}</p>
-                  
-                    <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
-                </div>
-            `;
-            item.querySelector(".order-summary").addEventListener("click", () => {
-                const details = item.querySelector(".order-details");
-                details.classList.toggle("hidden");
-            });
-            fragment.appendChild(item);
-        });
-        deliveredList.innerHTML = "";
-        deliveredList.appendChild(fragment);
-        if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery status yet.</p>";
+  if (!restaurantId) return;
+  const q = query(collection(db, "orders"), where("restaurantId", "==", restaurantId));
+  onSnapshot(q, (snapshot) => {
+    const orders = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .filter(order => ["delivered", "not_delivered"].includes(order.status)) // Show both delivered & not delivered
+      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    const fragment = document.createDocumentFragment();
+
+    orders.forEach(order => {
+      const itemsList = order.cart || order.items || [];
+      const mergedItemsMap = {};
+      itemsList.forEach(item => {
+        if (mergedItemsMap[item.name]) {
+          mergedItemsMap[item.name] += item.quantity;
+        } else {
+          mergedItemsMap[item.name] = item.quantity;
+        }
+      });
+      const mergedItems = Object.entries(mergedItemsMap)
+        .map(([name, qty]) => `${qty}x ${name}`)
+        .join("<br>");
+
+      const deliveryDetails = order.deliveryDetails || {};
+      const subtotal = itemsList.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const orderTime = (order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp)).toLocaleString();
+
+      // Determine color based on status
+      const statusColor = order.status === "delivered" ? "text-green-400" : "text-red-400";
+      const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+
+      const item = document.createElement("div");
+      item.className = "orders-item";
+      item.innerHTML = `
+        <div class="order-summary cursor-pointer">
+          <p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
+          <p class="font-bold text-lg text-white"> ${deliveryDetails.hostel || "Not provided"}, Room ${deliveryDetails.location || "Not provided"}</p>
+          <p class="font-bold text-lg text-white">Time: ${orderTime}</p>
+          <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
+          <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
+          <p><strong>Status:</strong> <span class="${statusColor} font-bold">${statusText}</span></p>
+
+          </div>
+        <div class="order-details hidden mt-2">
+          <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
+          <p><strong>Order ID:</strong> ${order.id}</p>
+          <p><strong>Contact:</strong> ${deliveryDetails.contactNumber || "Not provided"}</p>
+        </div>
+      `;
+      item.querySelector(".order-summary").addEventListener("click", () => {
+        const details = item.querySelector(".order-details");
+        details.classList.toggle("hidden");
+      });
+      fragment.appendChild(item);
     });
+
+    deliveredList.innerHTML = "";
+    deliveredList.appendChild(fragment);
+    if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery history yet.</p>";
+  }, (error) => {
+    console.error("Error loading delivered orders:", error);
+    deliveredList.innerHTML = "<p class='text-gray-400'>Error loading delivered orders.</p>";
+  });
 }
 
 document.getElementById("store-form").addEventListener("submit", async (e) => {
