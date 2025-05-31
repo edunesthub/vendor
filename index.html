@@ -2114,7 +2114,7 @@ function loadDeliveredOrders() {
   onSnapshot(q, (snapshot) => {
     const orders = snapshot.docs
       .map(doc => ({ id: doc.id, ...doc.data() }))
-      .filter(order => ["delivered", "not_delivered"].includes(order.status)) // Show both delivered & not delivered
+      .filter(order => ["delivered", "not_delivered", "being_delivered"].includes(order.status)) // Include all 3 statuses
       .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
     const fragment = document.createDocumentFragment();
@@ -2137,22 +2137,28 @@ function loadDeliveredOrders() {
       const subtotal = itemsList.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const orderTime = (order.timestamp?.toDate ? order.timestamp.toDate() : new Date(order.timestamp)).toLocaleString();
 
-      // Determine color based on status
-      const statusColor = order.status === "delivered" ? "text-green-400" : "text-red-400";
-      const statusText = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+      // Determine color and text based on status
+      let statusColor = "text-yellow-400";
+      let statusText = "In Transit";
+      if (order.status === "delivered") {
+        statusColor = "text-green-400";
+        statusText = "Delivered";
+      } else if (order.status === "not_delivered") {
+        statusColor = "text-red-400";
+        statusText = "Not Delivered";
+      }
 
       const item = document.createElement("div");
       item.className = "orders-item";
       item.innerHTML = `
         <div class="order-summary cursor-pointer">
           <p class="font-bold text-lg text-white">Items: ${mergedItems}</p>
-          <p class="font-bold text-lg text-white"> ${deliveryDetails.hostel || "Not provided"}, Room ${deliveryDetails.location || "Not provided"}</p>
+          <p class="font-bold text-lg text-white">${deliveryDetails.hostel || "Not provided"}, Room ${deliveryDetails.location || "Not provided"}</p>
           <p class="font-bold text-lg text-white">Time: ${orderTime}</p>
           <p class="font-bold text-lg text-white">Total: GH₵${subtotal.toFixed(2)}</p>
           <p class="font-bold text-lg text-white">Note: ${deliveryDetails.note || "None"}</p>
           <p><strong>Status:</strong> <span class="${statusColor} font-bold">${statusText}</span></p>
-
-          </div>
+        </div>
         <div class="order-details hidden mt-2">
           <p class="font-bold text-lg text-white"><u><strong>Other info</strong></u></p>
           <p><strong>Order ID:</strong> ${order.id}</p>
@@ -2171,7 +2177,7 @@ function loadDeliveredOrders() {
     if (!orders.length) deliveredList.innerHTML = "<p class='text-gray-400'>No delivery history yet.</p>";
   }, (error) => {
     console.error("Error loading delivered orders:", error);
-    deliveredList.innerHTML = "<p class='text-gray-400'>Error loading delivered orders.</p>";
+    deliveredList.innerHTML = "<p class='text-gray-400'>Error loading delivery status.</p>";
   });
 }
 
